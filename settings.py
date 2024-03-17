@@ -2,7 +2,7 @@ import math
 from settings import *
 
 # fixed game settings
-RES = WIDTH, HEIGHT = 1280, 720
+RES = WIDTH, HEIGHT = 1600, 1000
 HALF_WIDTH = WIDTH // 2
 HALF_HEIGHT = HEIGHT // 2
 FPS = 60
@@ -34,7 +34,7 @@ MAX_DEPTH = 20
 SCREEN_DIST = HALF_WIDTH / math.tan(HALF_FOV)
 SCALE = WIDTH // NUM_RAYS
 
-TEXTURE_SIZE = 256
+TEXTURE_SIZE = 1024
 HALF_TEXTURE_SIZE = TEXTURE_SIZE // 2
 
 # editable settings
