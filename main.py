@@ -27,13 +27,14 @@ class Game:
         #pg.event.set_grab(True)  # force mouse to stay focus in game windows
         self.is_over = True
         self.is_server = startServer
-        self.new_game()
         self.running = True
 
         if self.is_server:
             self.net_server = gRPC_Server_Interface(self)
         else:
             self.net_client = gRPC_Client_Interface(self)
+
+        self.new_game()
 
     def new_game(self):
         pg.event.clear()           
@@ -63,13 +64,13 @@ class Game:
         )
 
     def draw(self):
-        self.object_renderer.draw()
-        self.weapon.draw()
-        # self.screen.fill('black')
-        # self.map.draw()
-        # self.player.draw()
-        # for key, distant_players in self.distant_players.items():
-        #     distant_players.draw()
+        # self.object_renderer.draw()
+        # self.weapon.draw()
+        self.screen.fill('black')
+        self.map.draw()
+        self.player.draw()
+        for key, distant_players in self.distant_players.items():
+            distant_players.draw()
 
     def check_events(self):
         self.global_trigger = False

@@ -29,7 +29,7 @@ class NPC(AnimatedSprite):
         self.check_animation_time()
         self.get_sprite()
         self.run_logic()
-        #self.draw_ray_cast()
+        self.draw_ray_cast()
 
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map
@@ -72,7 +72,8 @@ class NPC(AnimatedSprite):
         if self.animation_trigger:
             self.game.sound.npc_shot.play()
             if random() < self.accuracy:
-                self.game.player.get_damage(self.attack_damage)
+                pass
+                #self.game.player.get_damage(self.attack_damage)
 
     def animate_death(self):
         if not self.alive:
