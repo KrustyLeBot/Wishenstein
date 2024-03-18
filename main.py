@@ -64,13 +64,13 @@ class Game:
         )
 
     def draw(self):
-        #self.object_renderer.draw()
-        #self.weapon.draw()
+        # self.object_renderer.draw()
+        # self.weapon.draw()
         self.screen.fill('black')
         self.map.draw()
         self.player.draw()
-        for key, distantPlayer in self.distant_players.items():
-            distantPlayer.draw()
+        for key, distant_players in self.distant_players.items():
+            distant_players.draw()
 
     def check_events(self):
         self.global_trigger = False

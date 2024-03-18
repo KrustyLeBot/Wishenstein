@@ -3,7 +3,7 @@ from sprite_object import *
 
 
 class NPC(AnimatedSprite):
-    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = 'empty'):
+    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = ''):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
@@ -19,7 +19,9 @@ class NPC(AnimatedSprite):
         self.accuracy = 0.15
         self.alive = True
         self.pain = False
-        self.ray_cast_value = False
+        self.ray_cast_uuid = ''
+        self.last_ray_cast_uuid = ''
+        self.local_ray_cast = False
         self.player_search_trigger = False
         self.frame_counter = 0
 
@@ -39,7 +41,26 @@ class NPC(AnimatedSprite):
             self.y += dy
 
     def movement(self):
-        next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.player.map_pos)
+        shouldReset = False;
+        if self.ray_cast_uuid == self.game.player.uuid or self.last_ray_cast_uuid == self.game.player.uuid:
+            next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.player.map_pos)
+        elif self.ray_cast_uuid != '':
+            if self.ray_cast_uuid in self.game.distant_players:
+                next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.distant_players[self.ray_cast_uuid].map_pos)
+            else:
+                shouldReset = True
+        elif self.last_ray_cast_uuid != '':
+            if self.last_ray_cast_uuid in self.game.distant_players:
+                next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.distant_players[self.last_ray_cast_uuid].map_pos)
+            else:
+                shouldReset = True
+        
+        if shouldReset:
+            #targeted player must have left
+            self.ray_cast_uuid = ''
+            self.last_ray_cast_uuid = ''
+            return
+        
         next_x, next_y = next_pos
         if next_pos not in self.game.object_handler.npc_positions:
             angle = math.atan2(next_y + 0.5 - self.y, next_x + 0.5 - self.x)
@@ -51,7 +72,8 @@ class NPC(AnimatedSprite):
         if self.animation_trigger:
             self.game.sound.npc_shot.play()
             if random() < self.accuracy:
-                self.game.player.get_damage(self.attack_damage)
+                pass
+                #self.game.player.get_damage(self.attack_damage)
 
     def animate_death(self):
         if not self.alive:
@@ -66,7 +88,7 @@ class NPC(AnimatedSprite):
             self.pain = False
 
     def check_hit_in_npc(self):
-        if self.ray_cast_value and self.game.player.shot:
+        if self.local_ray_cast and self.game.player.shot:
             if HALF_WIDTH - self.sprite_half_width < self.screen_x < HALF_WIDTH + self.sprite_half_width:
                 self.game.sound.npc_pain.play()
                 self.game.player.shot = False
@@ -81,18 +103,27 @@ class NPC(AnimatedSprite):
 
     def run_logic(self):
         if self.alive:
-            self.ray_cast_value = self.ray_cast_player_npc()
+            self.ray_cast_players_npc()
             self.check_hit_in_npc()
             if self.pain:
                 self.animate_pain()
-            elif self.ray_cast_value:
+            elif self.ray_cast_uuid != '':
                 self.player_search_trigger = True
-                if self.dist < self.attack_dist:
+                if self.ray_cast_uuid == self.game.player.uuid:
+                    if self.dist < self.attack_dist:
+                        self.animate(self.attack_images)
+                        self.attack()
+                    else:
+                        self.animate(self.walk_images)
+                        self.movement()
+                elif self.ray_cast_uuid != '':
+                    #raycast another player
+                    #todo must animate shoot in direction of other player
                     self.animate(self.attack_images)
-                    self.attack()
                 else:
                     self.animate(self.walk_images)
                     self.movement()
+
             elif self.player_search_trigger:
                 self.animate(self.walk_images)
                 self.movement()
@@ -103,26 +134,47 @@ class NPC(AnimatedSprite):
 
     def draw_ray_cast(self):
         pg.draw.circle(self.game.screen, 'red', (100 * self.x, 100 * self.y), 15)
-        if self.ray_cast_player_npc():
-            pg.draw.line(self.game.screen, 'orange', (100 * self.game.player.x, 100 * self.game.player.y),
-                         (100 * self.x, 100 * self.y), 2)
+        if self.ray_cast_uuid != '':
+            if self.ray_cast_uuid == self.game.player.uuid:
+                pg.draw.line(self.game.screen, 'orange', (100 * self.game.player.x, 100 * self.game.player.y), (100 * self.x, 100 * self.y), 2)
+            else:
+                player = self.game.distant_players[self.ray_cast_uuid]
+                pg.draw.line(self.game.screen, 'orange', (100 * player.x, 100 * player.y), (100 * self.x, 100 * self.y), 2)
 
     @property
     def map_pos(self):
         return int(self.x), int(self.y)
     
-    def ray_cast_player_npc(self):
-        if self.game.player.map_pos == self.map_pos:
+    def ray_cast_players_npc(self):
+        self.local_ray_cast = self.game.player.health > 1 and self.ray_cast_player_npc(self.game.player.map_pos, self.game.player.pos)
+        if self.local_ray_cast:
+            self.ray_cast_uuid = self.game.player.uuid
+            self.last_ray_cast_uuid = self.ray_cast_uuid
+            return
+
+        for key, distant_players in self.game.distant_players.items():
+            if distant_players.health > 1 and self.ray_cast_player_npc(distant_players.map_pos, distant_players.pos):
+                self.ray_cast_uuid = key
+                self.last_ray_cast_uuid = self.ray_cast_uuid
+                return
+        
+        self.ray_cast_uuid = ''
+    
+    def ray_cast_player_npc(self, player_map_pos, player_pos):
+        if player_map_pos == self.map_pos:
             return True
         
         wall_dist_v, wall_dist_h = 0, 0
         player_dist_v, player_dist_h = 0, 0
 
         self.ray_casting_result = []
-        ox, oy = self.game.player.pos
-        x_map, y_map = self.game.player.map_pos
+        ox, oy = player_pos
+        x_map, y_map = player_map_pos
 
-        ray_angle = self.theta
+        dx = self.x - ox
+        dy = self.y - oy
+        ray_angle = math.atan2(dy, dx)
+        
         sin_a = math.sin(ray_angle)
         cos_a = math.cos(ray_angle)
 
@@ -177,11 +229,11 @@ class NPC(AnimatedSprite):
 
 
 class SoldierNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = 'empty'):
+    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = ''):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
 
 class CacoDemonNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250, uuid_ = 'empty'):
+    def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250, uuid_ = ''):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_dist = 1.0
         self.health = 150
@@ -190,7 +242,7 @@ class CacoDemonNPC(NPC):
         self.accuracy = 0.35
 
 class CyberDemonNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0), scale=1.0, shift=0.04, animation_time=210, uuid_ = 'empty'):
+    def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0), scale=1.0, shift=0.04, animation_time=210, uuid_ = ''):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_dist = 6
         self.health = 350

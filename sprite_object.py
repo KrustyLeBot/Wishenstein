@@ -14,9 +14,9 @@ class SpriteObject:
         pos=(10.5, 3.5),
         scale=0.7,
         shift=0.27,
-        uuid_ = 'empty'
+        uuid_ = ''
     ):
-        if uuid_ == 'empty':
+        if uuid_ == '':
             self.uuid = str(uuid.uuid4())
         else:
             self.uuid = uuid_
@@ -62,6 +62,7 @@ class SpriteObject:
         self.dx, self.dy = dx, dy
         self.theta = math.atan2(dy, dx)
 
+        #todo sprite angle must follow its target
         delta = self.theta - self.player.angle
 
         if (dx > 0 and self.player.angle > math.pi) or (dx < 0 and dy < 0):
@@ -91,7 +92,7 @@ class AnimatedSprite(SpriteObject):
         scale=0.8,
         shift=0.16,
         animation_time=120,
-        uuid_ = 'empty'
+        uuid_ = ''
     ):
         super().__init__(game, path, pos, scale, shift, uuid_)
         self.animation_time = animation_time

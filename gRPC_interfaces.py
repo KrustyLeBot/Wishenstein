@@ -17,8 +17,8 @@ class gRPC_Client_Interface():
         except grpc.FutureTimeoutError:
             self.game.exit()
     
-    def SendPosition(self, uuid, pos_x, pos_y, pos_angle):
-        playerPosition = pb2.PlayerPosition(uuid = uuid, pos_x = pos_x, pos_y = pos_y, pos_angle = pos_angle)
+    def SendPosition(self, uuid, pos_x, pos_y, pos_angle, health):
+        playerPosition = pb2.PlayerPosition(uuid = uuid, pos_x = pos_x, pos_y = pos_y, pos_angle = pos_angle, health = health)
         return self.stub.SendPosition(playerPosition)
     
     def GetSprites(self):

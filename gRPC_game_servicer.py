@@ -11,14 +11,14 @@ class GameServicer(pb2_grpc.gameServicer):
     
     def SendPosition(self, position, context):
         uuid = position.uuid
-        self.game.distant_players[uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle)
+        self.game.distant_players[uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health)
 
         distantPlayer_dict_copy = copy.copy(self.game.distant_players)
         #add local player to dict
-        distantPlayer_dict_copy[self.game.player.uuid] = DistantPlayer(self.game, self.game.player.uuid, self.game.player.x, self.game.player.y, self.game.player.angle)
+        distantPlayer_dict_copy[self.game.player.uuid] = DistantPlayer(self.game, self.game.player.uuid, self.game.player.x, self.game.player.y, self.game.player.angle, self.game.player.health)
         for key, distantPlayer in distantPlayer_dict_copy.items():
             if key != uuid:
-                result = { 'uuid': key, 'pos_x': distantPlayer.x, 'pos_y': distantPlayer.y, 'pos_angle': distantPlayer.angle }
+                result = { 'uuid': key, 'pos_x': distantPlayer.x, 'pos_y': distantPlayer.y, 'pos_angle': distantPlayer.angle, 'health': distantPlayer.health }
                 yield pb2.PlayerPosition(**result)
 
     def GetSprites(self, empty, context):

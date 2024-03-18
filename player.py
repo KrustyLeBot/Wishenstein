@@ -35,7 +35,12 @@ class Player:
             return True
 
     def check_game_over(self):
-        if self.health < 1:
+        anyPlayerAlive = False
+        for key, distant_players in self.distant_players.items():
+            if distant_players.health > 1:
+                anyPlayerAlive = True
+
+        if self.health < 1 and not anyPlayerAlive:
             self.game.object_renderer.game_over()
             pg.display.flip()
             pg.time.delay(1500)
@@ -145,9 +150,9 @@ class Player:
 
         try:
             position_dict_tmp = {}
-            result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle)
+            result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle, health = self.health)
             for position in result:
-                position_dict_tmp[position.uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle)
+                position_dict_tmp[position.uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health)
             
             self.game.distant_players.clear()
             self.game.distant_players = position_dict_tmp
@@ -159,13 +164,14 @@ class Player:
 
 
 class DistantPlayer:
-    def __init__(self, game, uuid, pos_x, pos_y, pos_angle):
+    def __init__(self, game, uuid, pos_x, pos_y, pos_angle, health):
         self.game = game
         self.x = pos_x
         self.y = pos_y
         self.angle = pos_angle
         self.uuid = uuid
         self.last_update = time.time()
+        self.health = health
 
     def draw(self):
         pg.draw.line(
@@ -179,3 +185,11 @@ class DistantPlayer:
             2,
         )
         pg.draw.circle(self.game.screen, "orange", (self.x * 100, self.y * 100), 15)
+
+    @property
+    def pos(self):
+        return self.x, self.y
+    
+    @property
+    def map_pos(self):
+        return int(self.x), int(self.y)
