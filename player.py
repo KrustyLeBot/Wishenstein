@@ -1,5 +1,10 @@
 import pygame as pg
 import math
+import uuid
+import time
+import grpc
+import copy
+from threading import Thread
 from settings import *
 from map import *
 
@@ -14,6 +19,10 @@ class Player:
         self.rel = 0
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
+        self.uuid = str(uuid.uuid4())
+        self.last_send = 0
+        self.last_thread_time = 0
+        self.thread_working = False
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -113,6 +122,13 @@ class Player:
         self.mouse_control()
         self.recover_health()
 
+        #Send pos every 100ms in a separate thread
+        now = time.time()*1000
+        if (not self.game.is_server and now - self.last_send) >= (100):
+            thread = Thread(target=self.send_position)
+            thread.start()
+            self.last_send = now
+
     @property
     def pos(self):
         return self.x, self.y
@@ -120,3 +136,43 @@ class Player:
     @property
     def map_pos(self):
         return int(self.x), int(self.y)
+    
+    def send_position(self):
+        #If another thread is working, ignore
+        if self.thread_working:
+            return
+        self.thread_working = True
+
+        try:
+            result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle)
+            print(f'yield receive {result}')
+            for position in result:
+                print(f'yield receive {result}')
+                self.game.distant_players[position.uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle)
+        except grpc.RpcError as rpc_error:
+            pass
+    
+        self.thread_working = False
+
+
+class DistantPlayer:
+    def __init__(self, game, uuid, pos_x, pos_y, pos_angle):
+        self.game = game
+        self.x = pos_x
+        self.y = pos_y
+        self.angle = pos_angle
+        self.uuid = uuid
+        self.last_update = time.time()
+
+    def draw(self):
+        pg.draw.line(
+            self.game.screen,
+            "yellow",
+            (self.x * 100, self.y * 100),
+            (
+                self.x * 100 * WIDTH * math.cos(self.angle),
+                self.y * 100 * WIDTH * math.sin(self.angle),
+            ),
+            2,
+        )
+        pg.draw.circle(self.game.screen, "orange", (self.x * 100, self.y * 100), 15)

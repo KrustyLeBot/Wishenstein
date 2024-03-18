@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package game;
+
+service game{
+  rpc SendPosition(PlayerPosition) returns (PlayerPosition);
+}
+
+message PlayerPosition{
+ string uuid = 1;
+ float pos_x = 2;
+ float pos_y = 3;
+ float pos_angle = 4;
+}

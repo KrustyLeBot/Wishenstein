@@ -39,7 +39,7 @@ class ObjectHandler:
         add_sprite(AnimatedSprite(game, pos=(1.5, 24.5)))
 
         # spawn npc
-        self.enemies = 20 
+        self.enemies = 1
         self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
         self.weights = [70, 20, 10]
         self.restricted_area = {(i, j) for i in range(10) for j in range(10)} #no npc in the first 10x10 blocks

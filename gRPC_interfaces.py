@@ -1,0 +1,38 @@
+import grpc
+import game_pb2_grpc as pb2_grpc
+from concurrent import futures
+from gRPC_game_servicer import *
+
+
+HOST = 'localhost'
+PORT = 4002
+
+class gRPC_Client_Interface():
+    def __init__(self, game):
+        self.channel = grpc.insecure_channel('{}:{}'.format(HOST, PORT), options=[(b'grpc.enable_http_proxy', 0)])
+        self.stub = pb2_grpc.gameStub(self.channel)
+    
+    def SendPosition(self, uuid, pos_x, pos_y, pos_angle):
+        playerPosition = pb2.PlayerPosition(uuid = uuid, pos_x = pos_x, pos_y = pos_y, pos_angle = pos_angle)
+        return self.stub.SendPosition(playerPosition)
+    
+
+class gRPC_Server_Interface():
+    def __init__(self, game):
+        self.game = game
+        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=64))
+        pb2_grpc.add_gameServicer_to_server(GameServicer(game), self.server)
+        self.server.add_insecure_port('{}:{}'.format(HOST, PORT))
+        self.server.start()
+
+    def update(self):
+        # remove distant players not updated since 1 sec
+        now = time.time()
+        distantPlayer_dict_copy = copy.copy(self.game.distant_players)
+        key_to_delete = []
+        for key, distantPlayer in distantPlayer_dict_copy.items():
+            if (now - distantPlayer.last_update) > 1:
+                key_to_delete.append(key)
+
+        for key in key_to_delete:
+            self.game.distant_players.pop(key)

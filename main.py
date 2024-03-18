@@ -1,5 +1,6 @@
 import pygame as pg
 import sys
+
 from settings import *
 from map import *
 from player import *
@@ -9,10 +10,11 @@ from object_handler import *
 from weapon import *
 from sound import *
 from pathfinding import *
+from gRPC_interfaces import *
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, startServer):
         pg.init()
         pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
@@ -21,14 +23,22 @@ class Game:
         self.global_trigger = False
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
-        pg.event.set_grab(True)  # force mouse to stay focus in game windows
+        #pg.event.set_grab(True)  # force mouse to stay focus in game windows
+        self.is_over = True
+        self.is_server = startServer
         self.new_game()
-        self.is_over = False
 
     def new_game(self):
         pg.event.clear()
+
+        if self.is_server:
+            self.net_server = gRPC_Server_Interface(self)
+        else:
+            self.net_client = gRPC_Client_Interface(self)
+
         self.map = Map(self)
         self.player = Player(self)
+        self.distant_players = {}
         self.object_renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self)
@@ -38,6 +48,8 @@ class Game:
         
 
     def update(self):
+        if self.is_server:
+            self.net_server.update()
         self.player.update()
         self.raycasting.update()
         self.object_handler.update()
@@ -45,15 +57,17 @@ class Game:
         pg.display.flip()
         self.delta_time = self.clock.tick(FPS)
         pg.display.set_caption(
-            f"fps: {self.clock.get_fps() :.1f}, pos: {self.player.pos[0] :.1f}, {self.player.pos[1] :.1f}"
+            f"fps: {self.clock.get_fps() :.1f}, pos: {self.player.pos[0] :.1f}, {self.player.pos[1] :.1f}, server: {self.is_server}"
         )
 
     def draw(self):
-        self.object_renderer.draw()
-        self.weapon.draw()
-        # self.screen.fill('black')
-        # self.map.draw()
-        # self.player.draw()
+        #self.object_renderer.draw()
+        #self.weapon.draw()
+        self.screen.fill('black')
+        self.map.draw()
+        self.player.draw()
+        for key, distantPlayer in self.distant_players.items():
+            distantPlayer.draw()
 
     def check_events(self):
         self.global_trigger = False
@@ -78,5 +92,9 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game()
+    startServer = False
+    if len(sys.argv) == 2:
+        startServer = sys.argv[1] == 'True'
+    
+    game = Game(startServer)
     game.run()
