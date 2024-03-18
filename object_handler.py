@@ -22,6 +22,9 @@ class ObjectHandler:
         self.thread_working = False
 
         if self.game.is_server:
+            self.sprite_init_from_server = True
+            self.npc_init_from_server = True
+
             # sprite map
             add_sprite = self.add_sprite
             add_sprite(AnimatedSprite(game))

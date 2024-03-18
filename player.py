@@ -36,7 +36,7 @@ class Player:
 
     def check_game_over(self):
         anyPlayerAlive = False
-        for key, distant_players in self.distant_players.items():
+        for key, distant_players in self.game.distant_players.items():
             if distant_players.health > 1:
                 anyPlayerAlive = True
 
