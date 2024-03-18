@@ -144,13 +144,16 @@ class Player:
         self.thread_working = True
 
         try:
+            position_dict_tmp = {}
             result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle)
-            print(f'yield receive {result}')
             for position in result:
-                print(f'yield receive {result}')
-                self.game.distant_players[position.uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle)
-        except grpc.RpcError as rpc_error:
-            pass
+                position_dict_tmp[position.uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle)
+            
+            self.game.distant_players.clear()
+            self.game.distant_players = position_dict_tmp
+        
+        except:
+            self.game.exit()
     
         self.thread_working = False
 

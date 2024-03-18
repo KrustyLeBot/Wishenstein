@@ -3,7 +3,12 @@ syntax = "proto3";
 package game;
 
 service game{
-  rpc SendPosition(PlayerPosition) returns (PlayerPosition);
+  rpc SendPosition(PlayerPosition) returns (stream PlayerPosition) {}
+  rpc GetSprites(Empty) returns (stream Sprite) {}
+  rpc GetNpcs(Empty) returns (stream NPC) {}
+}
+
+message Empty{
 }
 
 message PlayerPosition{
@@ -11,4 +16,26 @@ message PlayerPosition{
  float pos_x = 2;
  float pos_y = 3;
  float pos_angle = 4;
+}
+
+message Sprite{
+ string type = 1;
+ string uuid = 2;
+ float pos_x = 3;
+ float pos_y = 4;
+ string path = 5;
+ float scale = 6;
+ float shift = 7;
+ float animation_time = 8;
+}
+
+message NPC{
+ string type = 1;
+ string uuid = 2;
+ float pos_x = 3;
+ float pos_y = 4;
+ string path = 5;
+ float scale = 6;
+ float shift = 7;
+ float animation_time = 8;
 }

@@ -9,12 +9,25 @@ PORT = 4002
 
 class gRPC_Client_Interface():
     def __init__(self, game):
+        self.game = game
         self.channel = grpc.insecure_channel('{}:{}'.format(HOST, PORT), options=[(b'grpc.enable_http_proxy', 0)])
-        self.stub = pb2_grpc.gameStub(self.channel)
+        try:
+            grpc.channel_ready_future(self.channel).result(timeout=5)
+            self.stub = pb2_grpc.gameStub(self.channel)
+        except grpc.FutureTimeoutError:
+            self.game.exit()
     
     def SendPosition(self, uuid, pos_x, pos_y, pos_angle):
         playerPosition = pb2.PlayerPosition(uuid = uuid, pos_x = pos_x, pos_y = pos_y, pos_angle = pos_angle)
         return self.stub.SendPosition(playerPosition)
+    
+    def GetSprites(self):
+        empty = pb2.Empty()
+        return self.stub.GetSprites(empty)
+    
+    def GetNpcs(self):
+        empty = pb2.Empty()
+        return self.stub.GetNpcs(empty)
     
 
 class gRPC_Server_Interface():

@@ -1,6 +1,7 @@
+import signal
 import pygame as pg
 import sys
-
+import time
 from settings import *
 from map import *
 from player import *
@@ -27,6 +28,7 @@ class Game:
         self.is_over = True
         self.is_server = startServer
         self.new_game()
+        self.running = True
 
     def new_game(self):
         pg.event.clear()
@@ -35,6 +37,7 @@ class Game:
             self.net_server = gRPC_Server_Interface(self)
         else:
             self.net_client = gRPC_Client_Interface(self)
+            
 
         self.map = Map(self)
         self.player = Player(self)
@@ -75,8 +78,7 @@ class Game:
             if event.type == pg.QUIT or (
                 event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE
             ):
-                pg.quit()
-                sys.exit()
+                self.exit()
             elif event.type == self.global_event:
                 self.global_trigger = True
             elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_over:
@@ -85,10 +87,19 @@ class Game:
             self.player.single_fire_event(event)
 
     def run(self):
-        while True:
+        while self.running:
             self.check_events()
             self.update()
             self.draw()
+
+    def exit_gracefully(self):
+        pass
+
+    def exit(self):
+        self.running = False
+        if self.is_server:
+            self.net_server.server.stop(0)
+        exit()
 
 
 if __name__ == "__main__":

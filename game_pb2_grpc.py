@@ -19,12 +19,34 @@ class gameStub(object):
                 request_serializer=game__pb2.PlayerPosition.SerializeToString,
                 response_deserializer=game__pb2.PlayerPosition.FromString,
                 )
+        self.GetSprites = channel.unary_stream(
+                '/game.game/GetSprites',
+                request_serializer=game__pb2.Empty.SerializeToString,
+                response_deserializer=game__pb2.Sprite.FromString,
+                )
+        self.GetNpcs = channel.unary_stream(
+                '/game.game/GetNpcs',
+                request_serializer=game__pb2.Empty.SerializeToString,
+                response_deserializer=game__pb2.NPC.FromString,
+                )
 
 
 class gameServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def SendPosition(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetSprites(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetNpcs(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -37,6 +59,16 @@ def add_gameServicer_to_server(servicer, server):
                     servicer.SendPosition,
                     request_deserializer=game__pb2.PlayerPosition.FromString,
                     response_serializer=game__pb2.PlayerPosition.SerializeToString,
+            ),
+            'GetSprites': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetSprites,
+                    request_deserializer=game__pb2.Empty.FromString,
+                    response_serializer=game__pb2.Sprite.SerializeToString,
+            ),
+            'GetNpcs': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetNpcs,
+                    request_deserializer=game__pb2.Empty.FromString,
+                    response_serializer=game__pb2.NPC.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -62,5 +94,39 @@ class game(object):
         return grpc.experimental.unary_stream(request, target, '/game.game/SendPosition',
             game__pb2.PlayerPosition.SerializeToString,
             game__pb2.PlayerPosition.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetSprites(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/game.game/GetSprites',
+            game__pb2.Empty.SerializeToString,
+            game__pb2.Sprite.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetNpcs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/game.game/GetNpcs',
+            game__pb2.Empty.SerializeToString,
+            game__pb2.NPC.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -3,8 +3,8 @@ from sprite_object import *
 
 
 class NPC(AnimatedSprite):
-    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180):
-        super().__init__(game, path, pos, scale, shift, animation_time)
+    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = 'empty'):
+        super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
         self.idle_images = self.get_images(self.path + '/idle')
@@ -27,6 +27,7 @@ class NPC(AnimatedSprite):
         self.check_animation_time()
         self.get_sprite()
         self.run_logic()
+        self.draw_ray_cast()
 
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map
@@ -100,6 +101,12 @@ class NPC(AnimatedSprite):
         else:
             self.animate_death()
 
+    def draw_ray_cast(self):
+        pg.draw.circle(self.game.screen, 'red', (100 * self.x, 100 * self.y), 15)
+        if self.ray_cast_player_npc():
+            pg.draw.line(self.game.screen, 'orange', (100 * self.game.player.x, 100 * self.game.player.y),
+                         (100 * self.x, 100 * self.y), 2)
+
     @property
     def map_pos(self):
         return int(self.x), int(self.y)
@@ -170,14 +177,12 @@ class NPC(AnimatedSprite):
 
 
 class SoldierNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5),
-                 scale=0.6, shift=0.38, animation_time=180):
-        super().__init__(game, path, pos, scale, shift, animation_time)
+    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = 'empty'):
+        super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
 
 class CacoDemonNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5),
-                 scale=0.7, shift=0.27, animation_time=250):
-        super().__init__(game, path, pos, scale, shift, animation_time)
+    def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250, uuid_ = 'empty'):
+        super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_dist = 1.0
         self.health = 150
         self.attack_damage = 25
@@ -185,9 +190,8 @@ class CacoDemonNPC(NPC):
         self.accuracy = 0.35
 
 class CyberDemonNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0),
-                 scale=1.0, shift=0.04, animation_time=210):
-        super().__init__(game, path, pos, scale, shift, animation_time)
+    def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0), scale=1.0, shift=0.04, animation_time=210, uuid_ = 'empty'):
+        super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_dist = 6
         self.health = 350
         self.attack_damage = 15

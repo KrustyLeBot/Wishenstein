@@ -1,6 +1,7 @@
 import pygame as pg
 import math
 import os
+import uuid
 from collections import deque
 from settings import *
 
@@ -13,8 +14,15 @@ class SpriteObject:
         pos=(10.5, 3.5),
         scale=0.7,
         shift=0.27,
+        uuid_ = 'empty'
     ):
+        if uuid_ == 'empty':
+            self.uuid = str(uuid.uuid4())
+        else:
+            self.uuid = uuid_
         self.game = game
+        self.raw_path = path
+        self.animation_time = 0
         self.player = game.player
         self.x, self.y = pos
         self.image = pg.image.load(path).convert_alpha()
@@ -83,8 +91,9 @@ class AnimatedSprite(SpriteObject):
         scale=0.8,
         shift=0.16,
         animation_time=120,
+        uuid_ = 'empty'
     ):
-        super().__init__(game, path, pos, scale, shift)
+        super().__init__(game, path, pos, scale, shift, uuid_)
         self.animation_time = animation_time
         self.path = path.rsplit("/", 1)[0]
         self.images = self.get_images(self.path)
