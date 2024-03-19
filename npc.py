@@ -116,7 +116,7 @@ class NPC(AnimatedSprite):
                 self.ray_cast_players_npc()
                 self.calc_ray_cast_dist()
                 self.check_hit_in_npc()
-            print(self.ray_cast_dist)
+            
             if self.pain:
                 self.animate_pain()
             elif self.ray_cast_uuid != '':

@@ -56,11 +56,11 @@ class Game:
         if self.is_server:
             self.net_server.update()
         self.player.update()
+        self.raycasting.update()
+        self.object_handler.update()
         distant_players_cpy = copy.copy(self.distant_players)
         for key, distant_players in distant_players_cpy.items():
                 distant_players.update()
-        self.raycasting.update()
-        self.object_handler.update()
         self.weapon.update()
         pg.display.flip()
         self.delta_time = self.clock.tick(FPS)
