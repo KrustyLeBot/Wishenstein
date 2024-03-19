@@ -62,7 +62,6 @@ class SpriteObject:
         self.dx, self.dy = dx, dy
         self.theta = math.atan2(dy, dx)
 
-        #todo sprite angle must follow its target, and not local player
         delta = self.theta - self.player.angle
 
         if (dx > 0 and self.player.angle > math.pi) or (dx < 0 and dy < 0):
@@ -73,10 +72,7 @@ class SpriteObject:
 
         self.dist = math.hypot(dx, dy)
         self.norm_dist = self.dist * math.cos(delta)
-        if (
-            -self.IMAGE_HALF_WIDTH < self.screen_x < (WIDTH + self.IMAGE_HALF_WIDTH)
-            and self.norm_dist > 0.5
-        ):
+        if (-self.IMAGE_HALF_WIDTH < self.screen_x < (WIDTH + self.IMAGE_HALF_WIDTH) and self.norm_dist > 0.5):
             self.get_sprite_projection()
 
     def update(self):

@@ -9,7 +9,7 @@ class ObjectHandler:
     def __init__(self, game):
         self.game = game
         self.sprite_list = []
-        self.npc_list = []
+        self.npc_list = {}
         self.npc_sprite_path = "resources/sprites/npc/"
         self.static_sprite_path = "resources/sprites/static_sprites/"
         self.anim_sprite_path = "resources/sprites/animated_sprites/"
@@ -75,14 +75,14 @@ class ObjectHandler:
                 self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
 
     def update(self):
-        self.npc_positions = { npc.map_pos for npc in self.npc_list if npc.alive }
+        self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.alive }
         [sprite.update() for sprite in self.sprite_list]
-        [npc.update() for npc in self.npc_list]
+        [npc.update() for key, npc in self.npc_list.items()]
         self.check_win()
 
-        #Load npcs state every 100ms
+        #Load npcs state every 30ms
         now = time.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (100):
+        if (not self.game.is_server and now - self.last_send) >= (30):
             thread = Thread(target=self.load_npcs)
             thread.start()
             self.last_send = now
@@ -91,7 +91,7 @@ class ObjectHandler:
         self.sprite_list.append(sprite)
 
     def add_npc(self, npc):
-        self.npc_list.append(npc)
+        self.npc_list[npc.uuid] = npc
     
     def check_win(self):
         if not len(self.npc_positions) and self.sprite_init_from_server and self.npc_init_from_server:
@@ -126,13 +126,40 @@ class ObjectHandler:
             result = self.game.net_client.GetNpcs()
             for npc in result:
                 if npc.type == SoldierNPC.__name__:
-                    npcs_list_tmp.append(SoldierNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid))
+                    npc_tmp = SoldierNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid)
                 elif npc.type == CacoDemonNPC.__name__:
-                    npcs_list_tmp.append(CacoDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid))
+                    npc_tmp = CacoDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid)
                 elif npc.type == CyberDemonNPC.__name__:
-                    npcs_list_tmp.append(CyberDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid))
+                    npc_tmp = CyberDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid)
 
-            self.npc_list = npcs_list_tmp
+                npc_tmp.ray_cast_uuid = npc.ray_cast_uuid
+                npc_tmp.last_ray_cast_uuid = npc.last_ray_cast_uuid
+                npc_tmp.local_ray_cast = (npc.ray_cast_uuid == self.game.player.uuid)
+                npc_tmp.ray_cast_dist = npc.ray_cast_dist
+                npcs_list_tmp.append(npc_tmp)
+
+            # Smart merge npcs, and only overrides pos/health/raycast info if npc already exist
+            # This avoid re-setting npc animation time and triggers
+            # If npc is raycasting local player, trust 
+            npcs_dict_final = {}  
+            for npc in npcs_list_tmp:
+                if npc.uuid in self.npc_list:
+                    tmp_npc = self.npc_list[npc.uuid]
+
+                    tmp_npc.x = npc.x
+                    tmp_npc.y = npc.y
+                    tmp_npc.health = npc.health
+
+                    tmp_npc.ray_cast_uuid = npc.ray_cast_uuid
+                    tmp_npc.last_ray_cast_uuid = npc.last_ray_cast_uuid
+                    tmp_npc.local_ray_cast = npc.local_ray_cast
+                    tmp_npc.ray_cast_dist = npc.ray_cast_dist
+
+                    npcs_dict_final[npc.uuid] = tmp_npc
+                else:
+                    npcs_dict_final[npc.uuid] = npc
+            
+            self.npc_list = npcs_dict_final
             self.npc_init_from_server = True
         
         except:

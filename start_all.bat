@@ -1,2 +1,2 @@
-start python main.py True
-start python main.py False
+start pythonw main.py True
+start pythonw main.py False

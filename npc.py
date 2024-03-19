@@ -1,6 +1,8 @@
 from random import randint, random, choice
+import copy
 from sprite_object import *
 
+render_2d_npc = True
 
 class NPC(AnimatedSprite):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = ''):
@@ -11,7 +13,7 @@ class NPC(AnimatedSprite):
         self.pain_images = self.get_images(self.path + '/pain')
         self.walk_images = self.get_images(self.path + '/walk')
 
-        self.attack_dist = randint(3, 6)
+        self.attack_dist = 4
         self.speed = 0.03
         self.size = 10
         self.health = 100
@@ -24,12 +26,15 @@ class NPC(AnimatedSprite):
         self.local_ray_cast = False
         self.player_search_trigger = False
         self.frame_counter = 0
+        self.ray_cast_dist = -1
 
     def update(self):
         self.check_animation_time()
         self.get_sprite()
         self.run_logic()
-        self.draw_ray_cast()
+
+        if render_2d_npc:
+            self.draw_ray_cast()
 
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map
@@ -41,7 +46,7 @@ class NPC(AnimatedSprite):
             self.y += dy
 
     def movement(self):
-        shouldReset = False;
+        shouldReset = False
         if self.ray_cast_uuid == self.game.player.uuid or self.last_ray_cast_uuid == self.game.player.uuid:
             next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.player.map_pos)
         elif self.ray_cast_uuid != '':
@@ -54,6 +59,8 @@ class NPC(AnimatedSprite):
                 next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.distant_players[self.last_ray_cast_uuid].map_pos)
             else:
                 shouldReset = True
+        else:
+            shouldReset = True
         
         if shouldReset:
             #targeted player must have left
@@ -70,8 +77,10 @@ class NPC(AnimatedSprite):
 
     def attack(self):
         if self.animation_trigger:
-            self.game.sound.npc_shot.play()
-            if random() < self.accuracy:
+            #self.game.sound.npc_shot.play()
+
+            # only apply damages is local player is target
+            if self.ray_cast_uuid == self.game.player.uuid and random() < self.accuracy:
                 pass
                 #self.game.player.get_damage(self.attack_damage)
 
@@ -103,23 +112,19 @@ class NPC(AnimatedSprite):
 
     def run_logic(self):
         if self.alive:
-            self.ray_cast_players_npc()
-            self.check_hit_in_npc()
+            if self.game.is_server:
+                self.ray_cast_players_npc()
+                self.calc_ray_cast_dist()
+                self.check_hit_in_npc()
+            print(self.ray_cast_dist)
             if self.pain:
                 self.animate_pain()
             elif self.ray_cast_uuid != '':
                 self.player_search_trigger = True
-                if self.ray_cast_uuid == self.game.player.uuid:
-                    if self.dist < self.attack_dist:
-                        self.animate(self.attack_images)
-                        self.attack()
-                    else:
-                        self.animate(self.walk_images)
-                        self.movement()
-                elif self.ray_cast_uuid != '':
-                    #raycast another player
-                    #todo must animate shoot in direction of other player
+
+                if self.ray_cast_uuid != '' and 0 <= self.ray_cast_dist < self.attack_dist:
                     self.animate(self.attack_images)
+                    self.attack()
                 else:
                     self.animate(self.walk_images)
                     self.movement()
@@ -146,16 +151,22 @@ class NPC(AnimatedSprite):
         return int(self.x), int(self.y)
     
     def ray_cast_players_npc(self):
-        self.local_ray_cast = self.game.player.health > 1 and self.ray_cast_player_npc(self.game.player.map_pos, self.game.player.pos)
-        if self.local_ray_cast:
-            self.ray_cast_uuid = self.game.player.uuid
-            self.last_ray_cast_uuid = self.ray_cast_uuid
-            return
+        # In order to have consistent result across all clients, we must do the raycast in a static order, by uuid
+        tmp_player_dict = {}
+        tmp_player_dict[self.game.player.uuid] = (self.game.player.health, self.game.player.map_pos, self.game.player.pos)
 
-        for key, distant_players in self.game.distant_players.items():
-            if distant_players.health > 1 and self.ray_cast_player_npc(distant_players.map_pos, distant_players.pos):
+        distant_players_cpy = copy.copy(self.game.distant_players)
+        for key, distant_players in distant_players_cpy.items():
+            tmp_player_dict[key] = (distant_players.health, distant_players.map_pos, distant_players.pos)
+
+        tmp_player_dict = dict(sorted(tmp_player_dict.items()))
+
+        for key, player in tmp_player_dict.items():
+            if player[0] > 1 and self.ray_cast_player_npc(player[1], player[2]):
                 self.ray_cast_uuid = key
                 self.last_ray_cast_uuid = self.ray_cast_uuid
+
+                self.local_ray_cast = (key == self.game.player.uuid)
                 return
         
         self.ray_cast_uuid = ''
@@ -226,6 +237,34 @@ class NPC(AnimatedSprite):
         if 0 < player_dist < wall_dist or not wall_dist:
             return True
         return False
+    
+    def calc_ray_cast_dist(self):
+        if self.ray_cast_uuid == '':
+            self.ray_cast_dist = -1
+            return
+
+        ox, oy, oangle = 0, 0, 0
+
+        if self.local_ray_cast:
+            ox = self.game.player.x
+            oy = self.game.player.y
+            oangle = self.game.player.y
+        else:
+            if not self.ray_cast_uuid in self.game.distant_players:
+                self.ray_cast_dist = -1
+                return
+            else:
+                player = self.game.distant_players[self.ray_cast_uuid]
+                ox = player.x
+                oy = player.y
+                oangle = player.angle
+
+        dx = self.x - ox
+        dy = self.y - oy
+        self.dx, self.dy = dx, dy
+        self.theta = math.atan2(dy, dx)
+
+        self.ray_cast_dist = math.hypot(dx, dy)
 
 
 class SoldierNPC(NPC):

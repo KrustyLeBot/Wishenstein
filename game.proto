@@ -39,4 +39,7 @@ message NPC{
  float scale = 6;
  float shift = 7;
  float animation_time = 8;
+ string ray_cast_uuid = 9;
+ string last_ray_cast_uuid = 10;
+ float ray_cast_dist = 11;
 }

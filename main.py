@@ -1,7 +1,5 @@
-import signal
 import pygame as pg
 import sys
-import time
 from settings import *
 from map import *
 from player import *
@@ -13,18 +11,22 @@ from sound import *
 from pathfinding import *
 from gRPC_interfaces import *
 
+render_2d = False
+
 
 class Game:
     def __init__(self, startServer):
         pg.init()
-        pg.mouse.set_visible(False)
+        if use_mouse:
+            pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.global_trigger = False
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
-        #pg.event.set_grab(True)  # force mouse to stay focus in game windows
+        if use_mouse:
+            pg.event.set_grab(True)  # force mouse to stay focus in game windows
         self.is_over = True
         self.is_server = startServer
         self.running = True
@@ -54,6 +56,9 @@ class Game:
         if self.is_server:
             self.net_server.update()
         self.player.update()
+        distant_players_cpy = copy.copy(self.distant_players)
+        for key, distant_players in distant_players_cpy.items():
+                distant_players.update()
         self.raycasting.update()
         self.object_handler.update()
         self.weapon.update()
@@ -64,13 +69,15 @@ class Game:
         )
 
     def draw(self):
-        # self.object_renderer.draw()
-        # self.weapon.draw()
-        self.screen.fill('black')
-        self.map.draw()
-        self.player.draw()
-        for key, distant_players in self.distant_players.items():
-            distant_players.draw()
+        if render_2d:
+            self.screen.fill('black')
+            self.map.draw()
+        else:
+            self.object_renderer.draw()
+            self.weapon.draw()
+            distant_players_cpy = copy.copy(self.distant_players)
+            for key, distant_players in distant_players_cpy.items():
+                distant_players.draw()
 
     def check_events(self):
         self.global_trigger = False

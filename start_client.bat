@@ -1,1 +1,1 @@
-start pythonw main.py False
+start python main.py False

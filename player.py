@@ -7,7 +7,10 @@ import copy
 from threading import Thread
 from settings import *
 from map import *
+from sprite_object import *
 
+use_mouse = False
+render_2d_players = True
 
 class Player:
     def __init__(self, game):
@@ -36,7 +39,8 @@ class Player:
 
     def check_game_over(self):
         anyPlayerAlive = False
-        for key, distant_players in self.game.distant_players.items():
+        distant_players_cpy = copy.copy(self.game.distant_players)
+        for key, distant_players in distant_players_cpy.items():
             if distant_players.health > 1:
                 anyPlayerAlive = True
 
@@ -89,6 +93,13 @@ class Player:
 
         self.check_wall_collision(dx, dy)
 
+        if not use_mouse:
+            #keys simplify multi client movement for debug
+            if keys[pg.K_LEFT]:
+                self.angle -= PLAYER_ROT_SPEED * self.game.delta_time
+            if keys[pg.K_RIGHT]:
+                self.angle += PLAYER_ROT_SPEED * self.game.delta_time
+
         self.angle %= math.tau
 
     def check_wall(self, x, y):
@@ -102,37 +113,32 @@ class Player:
             self.y += dy
 
     def draw(self):
-        pg.draw.line(
-            self.game.screen,
-            "yellow",
-            (self.x * 100, self.y * 100),
-            (
-                self.x * 100 * WIDTH * math.cos(self.angle),
-                self.y * 100 * WIDTH * math.sin(self.angle),
-            ),
-            2,
-        )
+        pg.draw.line(self.game.screen, "yellow", (self.x * 100, self.y * 100), (self.x * 100 * WIDTH * math.cos(self.angle), self.y * 100 * WIDTH * math.sin(self.angle)),2)
         pg.draw.circle(self.game.screen, "green", (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
-        mx, my = pg.mouse.get_pos()
-        if mx < MOUSE_BORDER_LEFT or mx > MOUSE_BORDER_RIGHT:
-            pg.mouse.set_pos([HALF_WIDTH, HALF_HEIGHT])
-        self.rel = pg.mouse.get_rel()[0]
-        self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
-        self.angle += self.rel * MOUSE_SENSITIVITY * self.game.delta_time
+        if use_mouse:
+            mx, my = pg.mouse.get_pos()
+            if mx < MOUSE_BORDER_LEFT or mx > MOUSE_BORDER_RIGHT:
+                pg.mouse.set_pos([HALF_WIDTH, HALF_HEIGHT])
+            self.rel = pg.mouse.get_rel()[0]
+            self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
+            self.angle += self.rel * MOUSE_SENSITIVITY * self.game.delta_time
 
     def update(self):
         self.movement()
         self.mouse_control()
         self.recover_health()
 
-        #Send pos every 100ms in a separate thread
+        #Send pos every 30ms in a separate thread
         now = time.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (100):
+        if (not self.game.is_server and now - self.last_send) >= (30):
             thread = Thread(target=self.send_position)
             thread.start()
             self.last_send = now
+
+        if render_2d_players:
+            self.draw()
 
     @property
     def pos(self):
@@ -163,8 +169,9 @@ class Player:
         self.thread_working = False
 
 
-class DistantPlayer:
+class DistantPlayer(AnimatedSprite):
     def __init__(self, game, uuid, pos_x, pos_y, pos_angle, health):
+        super().__init__(game, 'resources/sprites/players/0.png', (pos_x, pos_y), 0.6, 0.38, 180, uuid)
         self.game = game
         self.x = pos_x
         self.y = pos_y
@@ -173,18 +180,23 @@ class DistantPlayer:
         self.last_update = time.time()
         self.health = health
 
+        self.idle_images = self.get_images(self.path + '/idle')
+
     def draw(self):
-        pg.draw.line(
-            self.game.screen,
-            "yellow",
-            (self.x * 100, self.y * 100),
-            (
-                self.x * 100 * WIDTH * math.cos(self.angle),
-                self.y * 100 * WIDTH * math.sin(self.angle),
-            ),
-            2,
-        )
+        self.game.screen.blit(self.image, self.pos)
+
+    def draw_2d(self):
+        pg.draw.line(self.game.screen, "yellow", (self.x * 100, self.y * 100), (self.x * 100 * WIDTH * math.cos(self.angle), self.y * 100 * WIDTH * math.sin(self.angle)), 2)
         pg.draw.circle(self.game.screen, "orange", (self.x * 100, self.y * 100), 15)
+
+    def update(self):
+        # Render other players with their angle
+        self.check_animation_time()
+        self.get_sprite()
+        self.animate(self.idle_images)
+
+        if render_2d_players:
+            self.draw_2d()
 
     @property
     def pos(self):

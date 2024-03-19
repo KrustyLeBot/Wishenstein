@@ -36,7 +36,7 @@ class GameServicer(pb2_grpc.gameServicer):
             yield pb2.Sprite(**result)
 
     def GetNpcs(self, empty, context):
-        for npc in self.game.object_handler.npc_list:
+        for key, npc in self.game.object_handler.npc_list.items():
             result = {
                 'type': npc.__class__.__name__,
                 'uuid': npc.uuid,
@@ -45,6 +45,9 @@ class GameServicer(pb2_grpc.gameServicer):
                 'path': npc.raw_path,
                 'scale': npc.SPRITE_SCALE,
                 'shift': npc.SPRITE_HEIGHT_SHIFT,
-                'animation_time': npc.animation_time
+                'animation_time': npc.animation_time,
+                'ray_cast_uuid': npc.ray_cast_uuid,
+                'last_ray_cast_uuid': npc.last_ray_cast_uuid,
+                'ray_cast_dist': npc.ray_cast_dist,
                 }
             yield pb2.NPC(**result)
