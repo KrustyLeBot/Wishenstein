@@ -3,7 +3,7 @@ import game_pb2_grpc as pb2_grpc
 from concurrent import futures
 from gRPC_game_servicer import *
 
-
+# todo implem a text box to connect to server
 HOST = 'localhost'
 PORT = 4002
 
