@@ -2,7 +2,7 @@ from random import randint, random, choice
 import copy
 from sprite_object import *
 
-render_2d_npc = True
+render_2d_npc = False
 
 class NPC(AnimatedSprite):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = ''):

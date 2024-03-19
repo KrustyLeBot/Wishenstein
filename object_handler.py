@@ -140,7 +140,6 @@ class ObjectHandler:
 
             # Smart merge npcs, and only overrides pos/health/raycast info if npc already exist
             # This avoid re-setting npc animation time and triggers
-            # If npc is raycasting local player, trust 
             npcs_dict_final = {}  
             for npc in npcs_list_tmp:
                 if npc.uuid in self.npc_list:

@@ -10,7 +10,7 @@ from map import *
 from sprite_object import *
 
 use_mouse = False
-render_2d_players = True
+render_2d_players = False
 
 class Player:
     def __init__(self, game):
@@ -155,13 +155,29 @@ class Player:
         self.thread_working = True
 
         try:
-            position_dict_tmp = {}
+            position_dict_tmp = []
             result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle, health = self.health)
             for position in result:
-                position_dict_tmp[position.uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health)
+                position_dict_tmp.append(DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health))
             
-            self.game.distant_players.clear()
-            self.game.distant_players = position_dict_tmp
+            # Smart merge players, and only overrides pos/health info if player already exist
+            # This avoid re-setting player animation time and triggers
+            distant_players_copy = copy.copy(self.game.distant_players)
+            players_dict_final = {}  
+            for player in position_dict_tmp:
+                if player.uuid in distant_players_copy:
+                    tmp_player = distant_players_copy[player.uuid]
+
+                    tmp_player.x = player.x
+                    tmp_player.y = player.y
+                    tmp_player.angle = player.angle
+                    tmp_player.health = player.health
+
+                    players_dict_final[player.uuid] = tmp_player
+                else:
+                    players_dict_final[player.uuid] = player
+
+            self.game.distant_players = players_dict_final
         
         except:
             self.game.exit()
@@ -189,7 +205,7 @@ class DistantPlayer(AnimatedSprite):
     def update(self):
         # Render other players with their angle
         self.check_animation_time()
-        self.get_sprite() # should add player to object_rendered queue but doesnt work yet
+        self.get_sprite()
         self.animate(self.idle_images)
 
         if render_2d_players:
