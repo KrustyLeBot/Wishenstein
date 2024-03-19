@@ -182,9 +182,6 @@ class DistantPlayer(AnimatedSprite):
 
         self.idle_images = self.get_images(self.path + '/idle')
 
-    def draw(self):
-        self.game.screen.blit(self.image, self.pos)
-
     def draw_2d(self):
         pg.draw.line(self.game.screen, "yellow", (self.x * 100, self.y * 100), (self.x * 100 * WIDTH * math.cos(self.angle), self.y * 100 * WIDTH * math.sin(self.angle)), 2)
         pg.draw.circle(self.game.screen, "orange", (self.x * 100, self.y * 100), 15)
@@ -192,7 +189,7 @@ class DistantPlayer(AnimatedSprite):
     def update(self):
         # Render other players with their angle
         self.check_animation_time()
-        self.get_sprite()
+        self.get_sprite() # should add player to object_rendered queue but doesnt work yet
         self.animate(self.idle_images)
 
         if render_2d_players:

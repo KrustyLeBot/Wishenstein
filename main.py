@@ -75,9 +75,6 @@ class Game:
         else:
             self.object_renderer.draw()
             self.weapon.draw()
-            distant_players_cpy = copy.copy(self.distant_players)
-            for key, distant_players in distant_players_cpy.items():
-                distant_players.draw()
 
     def check_events(self):
         self.global_trigger = False
