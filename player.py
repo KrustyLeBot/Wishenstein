@@ -41,7 +41,7 @@ class Player:
         anyPlayerAlive = False
         distant_players_cpy = copy.copy(self.game.distant_players)
         for key, distant_players in distant_players_cpy.items():
-            if distant_players.health > 1:
+            if distant_players.health >= 1:
                 anyPlayerAlive = True
 
         if self.health < 1 and not anyPlayerAlive:
@@ -58,7 +58,7 @@ class Player:
         self.check_game_over()
 
     def single_fire_event(self, event):
-        if event.type == pg.MOUSEBUTTONDOWN:
+        if self.health >= 1 and event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1 and not self.shot and not self.game.weapon.reloading:
                 self.shot = True
                 self.game.sound.shotgun.play()
@@ -126,9 +126,12 @@ class Player:
             self.angle += self.rel * MOUSE_SENSITIVITY * self.game.delta_time
 
     def update(self):
-        self.movement()
-        self.mouse_control()
-        self.recover_health()
+        if self.health >= 1:
+            self.movement()
+            self.mouse_control()
+            self.recover_health()
+        else:
+            self.game.object_renderer.player_damage()
 
         #Send pos every 30ms in a separate thread
         now = time.time()*1000
@@ -196,20 +199,86 @@ class DistantPlayer(AnimatedSprite):
         self.last_update = time.time()
         self.health = health
 
-        self.idle_images = self.get_images(self.path + '/idle')
+        self.walk_images = self.get_images(self.path + '/walk')
+        self.walk_back_images = self.get_images(self.path + '/walk_back')
+
+        self.walk_left_images = self.get_images(self.path + '/walk_left')
+        self.walk_left_back_images = self.get_images(self.path + '/walk_left_back')
+        self.walk_left_front_images = self.get_images(self.path + '/walk_left_front')
+
+        self.walk_right_images = self.get_images(self.path + '/walk_right')
+        self.walk_right_back_images = self.get_images(self.path + '/walk_right_back')
+        self.walk_right_front_images = self.get_images(self.path + '/walk_right_front')
+
+        self.death_images = self.get_images(self.path + '/death')
+
+        self.deathTriggered = False
+        self.frame_counter = 0
 
     def draw_2d(self):
         pg.draw.line(self.game.screen, "yellow", (self.x * 100, self.y * 100), (self.x * 100 * WIDTH * math.cos(self.angle), self.y * 100 * WIDTH * math.sin(self.angle)), 2)
         pg.draw.circle(self.game.screen, "orange", (self.x * 100, self.y * 100), 15)
 
     def update(self):
-        # Render other players with their angle
         self.check_animation_time()
         self.get_sprite()
-        self.animate(self.idle_images)
 
+        if self.health < 1:
+            self.animate_death()
+            if not self.deathTriggered:
+                self.deathTriggered = True
+                self.game.sound.player_death.play()
+        else:
+            # todo add a static pos if player is not moving
+            # Choose animation depending on angle
+            if self.angle > self.player.angle:
+                delta = self.angle - self.player.angle
+                deg = math.degrees(delta)
+                if 157.5 <= deg < 202.5:
+                    self.animate(self.walk_images)
+                elif 247.5 <= deg < 292.5:
+                    self.animate(self.walk_left_images)
+                elif 67.5 <= deg < 112.5:
+                    self.animate(self.walk_right_images)
+                elif 112.5 <= deg < 157.5:
+                    self.animate(self.walk_right_front_images)
+                elif 22.5 <= deg < 67.5:
+                    self.animate(self.walk_right_back_images)
+                elif 202.5 <= deg < 247.5:
+                    self.animate(self.walk_left_front_images)
+                elif 292.5 <= deg < 337.5:
+                    self.animate(self.walk_left_back_images)
+                else:
+                    self.animate(self.walk_back_images)
+            else:
+                delta = self.player.angle - self.angle
+                deg = math.degrees(delta)
+                if 157.5 <= deg < 202.5:
+                    self.animate(self.walk_images)
+                elif 247.5 <= deg < 292.5:
+                    self.animate(self.walk_right_images)
+                elif 67.5 <= deg < 112.5:
+                    self.animate(self.walk_left_images)
+                elif 112.5 <= deg < 157.5:
+                    self.animate(self.walk_left_front_images)
+                elif 22.5 <= deg < 67.5:
+                    self.animate(self.walk_left_back_images)
+                elif 202.5 <= deg < 247.5:
+                    self.animate(self.walk_right_front_images)
+                elif 292.5 <= deg < 337.5:
+                    self.animate(self.walk_right_back_images)
+                else:
+                    self.animate(self.walk_back_images)
+        
         if render_2d_players:
             self.draw_2d()
+
+    def animate_death(self):
+        if self.health < 1:
+            if self.game.global_trigger and self.frame_counter < len(self.death_images) - 1:
+                self.death_images.rotate(-1)
+                self.image = self.death_images[0]
+                self.frame_counter += 1
 
     @property
     def pos(self):

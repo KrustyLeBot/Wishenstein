@@ -18,8 +18,7 @@ class NPC(AnimatedSprite):
         self.size = 10
         self.health = 100
         self.attack_damage = 10
-        self.accuracy = 0.15
-        self.alive = True
+        self.accuracy = 1
         self.pain = False
         self.ray_cast_uuid = ''
         self.last_ray_cast_uuid = ''
@@ -77,15 +76,14 @@ class NPC(AnimatedSprite):
 
     def attack(self):
         if self.animation_trigger:
-            #self.game.sound.npc_shot.play()
+            self.game.sound.npc_shot.play()
 
             # only apply damages is local player is target
             if self.ray_cast_uuid == self.game.player.uuid and random() < self.accuracy:
-                pass
-                #self.game.player.get_damage(self.attack_damage)
+                self.game.player.get_damage(self.attack_damage)
 
     def animate_death(self):
-        if not self.alive:
+        if self.health < 1:
             if self.game.global_trigger and self.frame_counter < len(self.death_images) - 1:
                 self.death_images.rotate(-1)
                 self.image = self.death_images[0]
@@ -105,24 +103,35 @@ class NPC(AnimatedSprite):
                 self.health -= self.game.weapon.damage
                 self.check_health()
 
+                if not self.game.is_server:
+                    # start other thread
+                    self.game.net_client.ShootNpc(self.uuid, self.game.weapon.damage)
+
     def check_health(self):
         if self.health < 1:
-            self.alive = False
             self.game.sound.npc_death.play()
 
     def run_logic(self):
-        if self.alive:
+        if self.health >= 1:
             if self.game.is_server:
                 self.ray_cast_players_npc()
                 self.calc_ray_cast_dist()
-                self.check_hit_in_npc()
+            
+            self.check_hit_in_npc()
             
             if self.pain:
                 self.animate_pain()
             elif self.ray_cast_uuid != '':
-                self.player_search_trigger = True
+                if self.game.is_server:
+                    if self.local_ray_cast and self.player.health < 1:
+                        self.player_search_trigger = False
+                    elif self.ray_cast_uuid in self.game.distant_players and self.game.distant_players[self.ray_cast_uuid].health < 1:
+                        self.player_search_trigger = False
+                    else:
+                        self.player_search_trigger = True
 
                 if self.ray_cast_uuid != '' and 0 <= self.ray_cast_dist < self.attack_dist:
+                    #todo display from different angle depending on the target
                     self.animate(self.attack_images)
                     self.attack()
                 else:
@@ -268,23 +277,37 @@ class NPC(AnimatedSprite):
 
 
 class SoldierNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = ''):
+    def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = '', health = -1):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
+        self.attack_dist = 4
+        if health == -1:
+            self.health = 100
+        else:
+            self.health = health
+        self.attack_damage = 10
+        self.speed = 0.03
+        self.accuracy = 0.15
 
 class CacoDemonNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250, uuid_ = ''):
+    def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250, uuid_ = '', health = -1):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_dist = 1.0
-        self.health = 150
+        if health == -1:
+            self.health = 150
+        else:
+            self.health = health
         self.attack_damage = 25
         self.speed = 0.05
-        self.accuracy = 0.35
+        #self.accuracy = 0.35
 
 class CyberDemonNPC(NPC):
-    def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0), scale=1.0, shift=0.04, animation_time=210, uuid_ = ''):
+    def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0), scale=1.0, shift=0.04, animation_time=210, uuid_ = '', health = -1):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
         self.attack_dist = 6
-        self.health = 350
+        if health == -1:
+            self.health = 350
+        else:
+            self.health = health
         self.attack_damage = 15
         self.speed = 0.055
-        self.accuracy = 0.25
+        #self.accuracy = 0.25

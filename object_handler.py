@@ -75,7 +75,7 @@ class ObjectHandler:
                 self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
 
     def update(self):
-        self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.alive }
+        self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.health >= 1 }
         [sprite.update() for sprite in self.sprite_list]
         [npc.update() for key, npc in self.npc_list.items()]
         self.check_win()
@@ -126,11 +126,11 @@ class ObjectHandler:
             result = self.game.net_client.GetNpcs()
             for npc in result:
                 if npc.type == SoldierNPC.__name__:
-                    npc_tmp = SoldierNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid)
+                    npc_tmp = SoldierNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid, npc.health)
                 elif npc.type == CacoDemonNPC.__name__:
-                    npc_tmp = CacoDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid)
+                    npc_tmp = CacoDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid, npc.health)
                 elif npc.type == CyberDemonNPC.__name__:
-                    npc_tmp = CyberDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid)
+                    npc_tmp = CyberDemonNPC(self.game, npc.path, (npc.pos_x, npc.pos_y), npc.scale, npc.shift, npc.animation_time, npc.uuid, npc.health)
 
                 npc_tmp.ray_cast_uuid = npc.ray_cast_uuid
                 npc_tmp.last_ray_cast_uuid = npc.last_ray_cast_uuid
@@ -147,7 +147,13 @@ class ObjectHandler:
 
                     tmp_npc.x = npc.x
                     tmp_npc.y = npc.y
+                    shouldTrigger = False
+                    if npc.health < 1 and tmp_npc.health >= 1:
+                        shouldTrigger = True
                     tmp_npc.health = npc.health
+                    if shouldTrigger:
+                        tmp_npc.check_health()
+                    
 
                     tmp_npc.ray_cast_uuid = npc.ray_cast_uuid
                     tmp_npc.last_ray_cast_uuid = npc.last_ray_cast_uuid

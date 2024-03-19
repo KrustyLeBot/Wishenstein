@@ -6,9 +6,15 @@ service game{
   rpc SendPosition(PlayerPosition) returns (stream PlayerPosition) {}
   rpc GetSprites(Empty) returns (stream Sprite) {}
   rpc GetNpcs(Empty) returns (stream NPC) {}
+  rpc ShootNpc(NpcShot) returns (Empty) {}
 }
 
 message Empty{
+}
+
+message NpcShot{
+ string uuid = 1;
+ int32 damage = 2;
 }
 
 message PlayerPosition{
@@ -42,4 +48,5 @@ message NPC{
  string ray_cast_uuid = 9;
  string last_ray_cast_uuid = 10;
  float ray_cast_dist = 11;
+ int32 health = 12;
 }
