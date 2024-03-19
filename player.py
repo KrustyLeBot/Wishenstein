@@ -61,8 +61,8 @@ class Player:
         self.check_game_over()
 
     def single_fire_event(self, event):
-        if self.health >= 1 and event.type == pg.MOUSEBUTTONDOWN:
-            if event.button == 1 and not self.shot and not self.game.weapon.reloading:
+        if self.health >= 1 and ((event.type == pg.MOUSEBUTTONDOWN and event.button == 1) or (event.type == pg.KEYDOWN and event.key == pg.K_SPACE)):
+            if not self.shot and not self.game.weapon.reloading:
                 self.shot = True
                 self.game.sound.shotgun.play()
                 self.game.weapon.reloading = True
