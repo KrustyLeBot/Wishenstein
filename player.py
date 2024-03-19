@@ -234,6 +234,7 @@ class DistantPlayer(AnimatedSprite):
                 self.game.sound.player_death.play()
         else:
             # todo add a static pos if player is not moving
+            # todo add extra image to sprite with AI
             # Choose animation depending on angle
             if self.angle > self.player.angle:
                 delta = self.angle - self.player.angle
