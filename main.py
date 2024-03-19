@@ -1,6 +1,5 @@
 import pygame as pg
 import sys
-from pyinstrument import Profiler
 from settings import *
 from map import *
 from player import *
@@ -13,7 +12,10 @@ from pathfinding import *
 from gRPC_interfaces import *
 
 render_2d = False
-profile_code = False
+profile_code = True
+
+if profile_code:
+    from pyinstrument import Profiler
 
 
 class Game:
@@ -142,7 +144,7 @@ if __name__ == "__main__":
 
     game = Game(startServer)
     game.run()
-    
+
     if profile_code:
         profiler.stop()
         profiler.print()
