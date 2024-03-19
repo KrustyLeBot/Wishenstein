@@ -3,5 +3,6 @@ grpcio
 grpcio-tools
 pygame
 numpy
+pyinstrument
 #
 
