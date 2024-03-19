@@ -1,5 +1,6 @@
 from random import randint, random, choice
 import copy
+from threading import Thread
 from sprite_object import *
 
 render_2d_npc = False
@@ -104,8 +105,11 @@ class NPC(AnimatedSprite):
                 self.check_health()
 
                 if not self.game.is_server:
-                    # start other thread
-                    self.game.net_client.ShootNpc(self.uuid, self.game.weapon.damage)
+                    thread = Thread(target=self.send_damage, args=(self.uuid, self.game.weapon.damage))
+                    thread.start()
+
+    def send_damage(self, uuid, damage):
+        self.game.net_client.ShootNpc(uuid, damage)
 
     def check_health(self):
         if self.health < 1:
@@ -298,7 +302,7 @@ class CacoDemonNPC(NPC):
             self.health = health
         self.attack_damage = 25
         self.speed = 0.05
-        #self.accuracy = 0.35
+        self.accuracy = 0.35
 
 class CyberDemonNPC(NPC):
     def __init__(self, game, path='resources/sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0), scale=1.0, shift=0.04, animation_time=210, uuid_ = '', health = -1):
@@ -310,4 +314,4 @@ class CyberDemonNPC(NPC):
             self.health = health
         self.attack_damage = 15
         self.speed = 0.055
-        #self.accuracy = 0.25
+        self.accuracy = 0.25

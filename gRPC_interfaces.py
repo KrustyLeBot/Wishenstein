@@ -32,6 +32,10 @@ class gRPC_Client_Interface():
     def ShootNpc(self, uuid, damage):
         npcShot = pb2.NpcShot(uuid = uuid, damage = damage)
         self.stub.ShootNpc(npcShot)
+
+    def CheckNewGame(self):
+        empty = pb2.Empty()
+        return self.stub.CheckNewGame(empty)
     
 
 class gRPC_Server_Interface():

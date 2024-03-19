@@ -34,6 +34,11 @@ class gameStub(object):
                 request_serializer=game__pb2.NpcShot.SerializeToString,
                 response_deserializer=game__pb2.Empty.FromString,
                 )
+        self.CheckNewGame = channel.unary_unary(
+                '/game.game/CheckNewGame',
+                request_serializer=game__pb2.Empty.SerializeToString,
+                response_deserializer=game__pb2.NewGame.FromString,
+                )
 
 
 class gameServicer(object):
@@ -63,6 +68,12 @@ class gameServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CheckNewGame(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_gameServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -85,6 +96,11 @@ def add_gameServicer_to_server(servicer, server):
                     servicer.ShootNpc,
                     request_deserializer=game__pb2.NpcShot.FromString,
                     response_serializer=game__pb2.Empty.SerializeToString,
+            ),
+            'CheckNewGame': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckNewGame,
+                    request_deserializer=game__pb2.Empty.FromString,
+                    response_serializer=game__pb2.NewGame.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -161,5 +177,22 @@ class game(object):
         return grpc.experimental.unary_unary(request, target, '/game.game/ShootNpc',
             game__pb2.NpcShot.SerializeToString,
             game__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CheckNewGame(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/game.game/CheckNewGame',
+            game__pb2.Empty.SerializeToString,
+            game__pb2.NewGame.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

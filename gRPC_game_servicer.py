@@ -67,3 +67,6 @@ class GameServicer(pb2_grpc.gameServicer):
             npc = self.game.object_handler.npc_list[NpcShot.uuid]
             npc.health -= NpcShot.damage
         return pb2.Empty()
+    
+    def CheckNewGame(self, empty, context):
+        return pb2.NewGame(game_uuid = self.game.game_uuid)

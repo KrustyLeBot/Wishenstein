@@ -7,9 +7,14 @@ service game{
   rpc GetSprites(Empty) returns (stream Sprite) {}
   rpc GetNpcs(Empty) returns (stream NPC) {}
   rpc ShootNpc(NpcShot) returns (Empty) {}
+  rpc CheckNewGame(Empty) returns (NewGame) {}
 }
 
 message Empty{
+}
+
+message NewGame{
+  string game_uuid = 1;
 }
 
 message NpcShot{

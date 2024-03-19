@@ -27,20 +27,28 @@ class Game:
         pg.time.set_timer(self.global_event, 40)
         if use_mouse:
             pg.event.set_grab(True)  # force mouse to stay focus in game windows
-        self.is_over = True
         self.is_server = startServer
         self.running = True
+        self.game_uuid = ''
+
+        self.last_send = 0
+        self.thread_working = False
 
         if self.is_server:
             self.net_server = gRPC_Server_Interface(self)
+            self.is_over = False
         else:
             self.net_client = gRPC_Client_Interface(self)
-
+            self.is_over = True
+            
         self.new_game()
 
-    def new_game(self):
+    def new_game(self, game_uuid = ''):
+        if game_uuid == '':
+            self.game_uuid = str(uuid.uuid4())
+        else:
+            self.game_uuid = game_uuid
         pg.event.clear()           
-
         self.map = Map(self)
         self.player = Player(self)
         self.distant_players = {}
@@ -64,9 +72,15 @@ class Game:
         self.weapon.update()
         pg.display.flip()
         self.delta_time = self.clock.tick(FPS)
-        pg.display.set_caption(
-            f"fps: {self.clock.get_fps() :.1f}, pos: {self.player.pos[0] :.1f}, {self.player.pos[1] :.1f}, server: {self.is_server}"
-        )
+        pg.display.set_caption(f"fps: {self.clock.get_fps() :.1f}, pos: {self.player.pos[0] :.1f}, {self.player.pos[1] :.1f}, server: {self.is_server}")
+
+        #Check new game every 100ms
+        if self.is_over:
+            now = time.time()*1000
+            if (not self.is_server and now - self.last_send) >= (100):
+                thread = Thread(target=self.check_new_game)
+                thread.start()
+                self.last_send = now
 
     def draw(self):
         if render_2d:
@@ -85,7 +99,7 @@ class Game:
                 self.exit()
             elif event.type == self.global_event:
                 self.global_trigger = True
-            elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_over:
+            elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_over and self.is_server:
                 pg.display.flip()
                 self.new_game()
             self.player.single_fire_event(event)
@@ -96,8 +110,19 @@ class Game:
             self.update()
             self.draw()
 
-    def exit_gracefully(self):
-        pass
+    def check_new_game(self):
+        #If another thread is working, ignore
+        if self.thread_working:
+            return
+        self.thread_working = True
+
+        result = self.net_client.CheckNewGame()
+
+        if result.game_uuid != self.game_uuid:
+            self.is_over = False
+            self.new_game(result.game_uuid)
+
+        self.thread_working = False
 
     def exit(self):
         self.running = False

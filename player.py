@@ -2,7 +2,6 @@ import pygame as pg
 import math
 import uuid
 import time
-import grpc
 import copy
 from threading import Thread
 from settings import *
@@ -24,8 +23,8 @@ class Player:
         self.time_prev = pg.time.get_ticks()
         self.uuid = str(uuid.uuid4())
         self.last_send = 0
-        self.last_thread_time = 0
         self.thread_working = False
+        self.endTriggered = False
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -38,6 +37,9 @@ class Player:
             return True
 
     def check_game_over(self):
+        if self.endTriggered:
+            return
+
         anyPlayerAlive = False
         distant_players_cpy = copy.copy(self.game.distant_players)
         for key, distant_players in distant_players_cpy.items():
@@ -45,6 +47,7 @@ class Player:
                 anyPlayerAlive = True
 
         if self.health < 1 and not anyPlayerAlive:
+            self.endTriggered = True
             self.game.object_renderer.game_over()
             pg.display.flip()
             pg.time.delay(1500)
@@ -126,6 +129,7 @@ class Player:
             self.angle += self.rel * MOUSE_SENSITIVITY * self.game.delta_time
 
     def update(self):
+        self.check_game_over()
         if self.health >= 1:
             self.movement()
             self.mouse_control()
