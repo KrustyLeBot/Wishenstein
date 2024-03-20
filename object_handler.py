@@ -52,7 +52,7 @@ class ObjectHandler:
 
             self.add_npc(SoldierNPC(game))
 
-            # spawn npc
+            #spawn npc
             # self.enemies = 20
             # self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
             # self.weights = [70, 20, 10]

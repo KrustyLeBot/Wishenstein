@@ -181,9 +181,9 @@ class Game:
 
 
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
     if profile_code:
-        profiler = Profiler()
+        profiler = Profiler(interval = 0.0001)
         profiler.start()
 
     game = Game()

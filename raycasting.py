@@ -1,5 +1,6 @@
 import pygame as pg
 import math
+import cProfile
 from settings import *
 
 
@@ -63,6 +64,7 @@ class RayCasting:
                 y_hor += dy
                 depth_hor += delta_depth
             # end(horizontals)
+            
 
             # verticals
             x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 1e-6, -1)
@@ -111,10 +113,13 @@ class RayCasting:
 
             # projection
             proj_height = SCREEN_DIST / (depth + 1e-6)
+
             self.ray_casting_result.append((depth, proj_height, texture, offset))
 
             ray_angle += DELTA_ANGLE
 
     def update(self):
+        #cProfile.runctx('self.ray_cast()', globals(), locals())
         self.ray_cast()
-        self.get_objects_to_render()
+        cProfile.runctx('self.get_objects_to_render()', globals(), locals())
+        #self.get_objects_to_render()
