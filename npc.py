@@ -3,8 +3,6 @@ import copy
 from threading import Thread
 from sprite_object import *
 
-render_2d_npc = False
-
 class NPC(AnimatedSprite):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180, uuid_ = ''):
         super().__init__(game, path, pos, scale, shift, animation_time, uuid_)
@@ -33,7 +31,7 @@ class NPC(AnimatedSprite):
         self.get_sprite()
         self.run_logic()
 
-        if render_2d_npc:
+        if self.game.render_2d:
             self.draw_ray_cast()
 
     def check_wall(self, x, y):

@@ -8,9 +8,6 @@ from settings import *
 from map import *
 from sprite_object import *
 
-use_mouse = False
-render_2d_players = False
-
 class Player:
     def __init__(self, game):
         self.game = game
@@ -96,7 +93,7 @@ class Player:
 
         self.check_wall_collision(dx, dy)
 
-        if not use_mouse:
+        if not self.game.use_mouse:
             #keys simplify multi client movement for debug
             if keys[pg.K_LEFT]:
                 self.angle -= PLAYER_ROT_SPEED * self.game.delta_time
@@ -120,7 +117,7 @@ class Player:
         pg.draw.circle(self.game.screen, "green", (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
-        if use_mouse:
+        if self.game.use_mouse:
             mx, my = pg.mouse.get_pos()
             if mx < MOUSE_BORDER_LEFT or mx > MOUSE_BORDER_RIGHT:
                 pg.mouse.set_pos([HALF_WIDTH, HALF_HEIGHT])
@@ -144,7 +141,7 @@ class Player:
             thread.start()
             self.last_send = now
 
-        if render_2d_players:
+        if self.game.render_2d:
             self.draw()
 
     @property
@@ -275,7 +272,7 @@ class DistantPlayer(AnimatedSprite):
                 else:
                     self.animate(self.walk_back_images)
         
-        if render_2d_players:
+        if self.game.render_2d:
             self.draw_2d()
 
     def animate_death(self):

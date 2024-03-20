@@ -13,8 +13,12 @@ class RayCasting:
 
     def get_objects_to_render(self):
         self.objects_to_render = []
-        for ray, values in enumerate(self.ray_casting_result):
-            depth, proj_height, texture, offset = values
+
+        #we must take the furthest displayed element, and replace it by a black image of the width of the screen
+        #this will ensure to have a black displayed texture instead of potentially transparent space
+        temp = []
+        for values in self.ray_casting_result:
+            ray, depth, proj_height, texture, offset = values
 
             if proj_height < HEIGHT:
                 wall_column = self.textures[texture].subsurface(
@@ -22,28 +26,29 @@ class RayCasting:
                 )
                 wall_column = pg.transform.scale(wall_column, (SCALE, proj_height))
                 wall_pos = (ray * SCALE, HALF_HEIGHT - proj_height // 2)
-
             else:
                 texture_height = TEXTURE_SIZE * HEIGHT / proj_height
                 wall_column = self.textures[texture].subsurface(
-                    offset * (TEXTURE_SIZE - SCALE),
-                    HALF_TEXTURE_SIZE - texture_height // 2,
-                    SCALE,
-                    texture_height,
+                    offset * (TEXTURE_SIZE - SCALE), HALF_TEXTURE_SIZE - texture_height // 2,
+                    SCALE, texture_height
                 )
                 wall_column = pg.transform.scale(wall_column, (SCALE, HEIGHT))
                 wall_pos = (ray * SCALE, 0)
-
+            
             self.objects_to_render.append((depth, wall_column, wall_pos))
 
     def ray_cast(self):
         self.ray_casting_result = []
         ox, oy = self.game.player.pos
         x_map, y_map = self.game.player.map_pos
-        texture_hor, texture_vert = 1, 1
+
+        self.game.map.ray_casted_map_pos_hor = {}
+        self.game.map.ray_casted_map_pos_vert = {}
 
         ray_angle = self.game.player.angle - HALF_FOV + 1e-6
         for ray in range(NUM_RAYS):
+            texture_hor, texture_vert = 0, 0
+
             sin_a = math.sin(ray_angle)
             cos_a = math.cos(ray_angle)
 
@@ -59,6 +64,7 @@ class RayCasting:
                 tile_hor = int(x_hor), int(y_hor)
                 if tile_hor in self.game.map.world_map:
                     texture_hor = self.game.map.world_map[tile_hor]
+                    self.game.map.ray_casted_map_pos_hor[tile_hor] = texture_hor
                     break
                 x_hor += dx
                 y_hor += dy
@@ -78,6 +84,8 @@ class RayCasting:
                 tile_vert = int(x_vert), int(y_vert)
                 if tile_vert in self.game.map.world_map:
                     texture_vert = self.game.map.world_map[tile_vert]
+                    self.game.map.ray_casted_map_pos_vert[tile_vert] = texture_vert
+                    found_vert = True
                     break
                 x_vert += dx
                 y_vert += dy
@@ -92,6 +100,9 @@ class RayCasting:
                 depth, texture = depth_hor, texture_hor
                 x_hor %= 1
                 offset = (1 - x_hor) if sin_a > 0 else x_hor
+
+            if self.game.render_2d:
+                pg.draw.line(self.game.screen, 'blue', (100 * ox, 100 * oy), (100 * ox + 100 * depth * cos_a, 100 * oy + 100 * depth * sin_a), 2)
 
             # remove fishbowl effect
             # Depth is length of arc between player and wall. but center of wall is closer than the sides => fishbowl
@@ -114,12 +125,14 @@ class RayCasting:
             # projection
             proj_height = SCREEN_DIST / (depth + 1e-6)
 
-            self.ray_casting_result.append((depth, proj_height, texture, offset))
+            self.ray_casting_result.append((ray, depth, proj_height, texture, offset))
 
             ray_angle += DELTA_ANGLE
 
     def update(self):
-        #cProfile.runctx('self.ray_cast()', globals(), locals())
-        self.ray_cast()
+        print('ray_cast')
+        cProfile.runctx('self.ray_cast()', globals(), locals())
+        #self.ray_cast()
+        print('get_objects_to_render')
         cProfile.runctx('self.get_objects_to_render()', globals(), locals())
         #self.get_objects_to_render()

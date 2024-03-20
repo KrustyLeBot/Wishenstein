@@ -1,6 +1,5 @@
 import pygame as pg
 import pygame_textinput
-import sys
 from settings import *
 from map import *
 from player import *
@@ -12,9 +11,8 @@ from sound import *
 from pathfinding import *
 from gRPC_interfaces import *
 
-render_2d = False
-profile_code = True
 
+profile_code = True
 use_static_port = True
 STATIC_PORT = 5000
 
@@ -25,7 +23,9 @@ if profile_code:
 class Game:
     def __init__(self):
         pg.init()
-        if use_mouse:
+        self.render_2d = False
+        self.use_mouse = False
+        if self.use_mouse:
             pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
         self.clock = pg.time.Clock()
@@ -33,7 +33,7 @@ class Game:
         self.global_trigger = False
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
-        if use_mouse:
+        if self.use_mouse:
             pg.event.set_grab(True)  # force mouse to stay focus in game windows
         self.is_server = False
         self.init = False
@@ -111,7 +111,7 @@ class Game:
 
     def draw(self):
         if self.init:
-            if render_2d:
+            if self.render_2d:
                 self.screen.fill('black')
                 self.map.draw()
             else:

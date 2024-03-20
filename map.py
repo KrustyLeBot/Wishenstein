@@ -80,6 +80,8 @@ class Map:
         self.rows = len(self.mini_map)
         self.cols = len(self.mini_map[0])
         self.get_map()
+        self.ray_casted_map_pos_hor = {}
+        self.ray_casted_map_pos_vert = {}
 
     def get_map(self):
         for j, row in enumerate(self.mini_map):
@@ -88,9 +90,12 @@ class Map:
                     self.world_map[(i, j)] = value
 
     def draw(self):
-        [
-            pg.draw.rect(
-                self.game.screen, "darkgray", (pos[0] * 100, pos[1] * 100, 100, 100), 2
-            )
-            for pos in self.world_map
-        ]
+        [pg.draw.rect(self.game.screen, self.get_color(pos), (pos[0] * 100, pos[1] * 100, 100, 100), 2) for pos in self.world_map]
+
+    def get_color(self, pos):
+        if pos in self.ray_casted_map_pos_hor:
+            return 'green'
+        elif pos in self.ray_casted_map_pos_vert:
+            return 'orange'
+        else:
+            return 'darkgray'
