@@ -4,5 +4,6 @@ grpcio-tools
 pygame
 numpy
 pyinstrument
+pygame-textinput
 #
 

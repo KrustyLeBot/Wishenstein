@@ -1,4 +1,4 @@
-from random import randint, random, choice
+from random import random
 import copy
 from threading import Thread
 from sprite_object import *

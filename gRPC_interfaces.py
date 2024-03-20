@@ -1,16 +1,16 @@
 import grpc
+import random
 import game_pb2_grpc as pb2_grpc
 from concurrent import futures
 from gRPC_game_servicer import *
 
-# todo implem a text box to connect to server
-HOST = 'localhost'
-PORT = 4002
+LOCALHOST = 'localhost'
+SERVER_HOST = '0.0.0.0'
 
 class gRPC_Client_Interface():
-    def __init__(self, game):
+    def __init__(self, game, ip):
         self.game = game
-        self.channel = grpc.insecure_channel('{}:{}'.format(HOST, PORT), options=[(b'grpc.enable_http_proxy', 0)])
+        self.channel = grpc.insecure_channel(ip, options=[(b'grpc.enable_http_proxy', 0)])
         try:
             grpc.channel_ready_future(self.channel).result(timeout=5)
             self.stub = pb2_grpc.gameStub(self.channel)
@@ -39,11 +39,15 @@ class gRPC_Client_Interface():
     
 
 class gRPC_Server_Interface():
-    def __init__(self, game):
+    def __init__(self, game, input_port = -1):
         self.game = game
+        if input_port == -1:
+            self.public_port = random.randint(5000, 6000)
+        else:
+            self.public_port = input_port
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=64))
         pb2_grpc.add_gameServicer_to_server(GameServicer(game), self.server)
-        self.server.add_insecure_port('{}:{}'.format(HOST, PORT))
+        self.server.add_insecure_port('{}:{}'.format(SERVER_HOST, self.public_port))
         self.server.start()
 
     def update(self):
@@ -57,3 +61,7 @@ class gRPC_Server_Interface():
 
         for key in key_to_delete:
             self.game.distant_players.pop(key)
+
+    @property
+    def port(self):
+        return self.public_port

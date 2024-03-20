@@ -5,20 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Server",
+            "name": "Main",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
-            "console": "integratedTerminal",
-            "args": ["True"]
+            "console": "integratedTerminal"
         },
-        {
-            "name": "Client",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "args": ["False"]
-        }
     ]
 }
