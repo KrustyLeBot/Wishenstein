@@ -42,10 +42,7 @@ class RayCasting:
         ox, oy = self.game.player.pos
         x_map, y_map = self.game.player.map_pos
 
-        self.game.map.ray_casted_map_pos_hor = {}
-        self.game.map.ray_casted_map_pos_vert = {}
-
-        ray_angle = self.game.player.angle - HALF_FOV + 1e-6
+        ray_angle = self.game.player.angle - HALF_FOV + 0.0001
         for ray in range(NUM_RAYS):
             texture_hor, texture_vert = 0, 0
 
@@ -53,7 +50,7 @@ class RayCasting:
             cos_a = math.cos(ray_angle)
 
             # horizontals
-            y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 1e-6, -1)
+            y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 0.0001, -1)
             depth_hor = (y_hor - oy) / sin_a
             x_hor = ox + depth_hor * cos_a
 
@@ -61,19 +58,17 @@ class RayCasting:
             dx = delta_depth * cos_a
 
             for i in range(MAX_DEPTH):
-                tile_hor = int(x_hor), int(y_hor)
+                tile_hor = x_hor//1, y_hor//1
                 if tile_hor in self.game.map.world_map:
                     texture_hor = self.game.map.world_map[tile_hor]
-                    self.game.map.ray_casted_map_pos_hor[tile_hor] = texture_hor
                     break
                 x_hor += dx
                 y_hor += dy
                 depth_hor += delta_depth
             # end(horizontals)
             
-
             # verticals
-            x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 1e-6, -1)
+            x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 0.0001, -1)
             depth_vert = (x_vert - ox) / cos_a
             y_vert = oy + depth_vert * sin_a
 
@@ -84,8 +79,6 @@ class RayCasting:
                 tile_vert = int(x_vert), int(y_vert)
                 if tile_vert in self.game.map.world_map:
                     texture_vert = self.game.map.world_map[tile_vert]
-                    self.game.map.ray_casted_map_pos_vert[tile_vert] = texture_vert
-                    found_vert = True
                     break
                 x_vert += dx
                 y_vert += dy
@@ -120,6 +113,7 @@ class RayCasting:
             #                          \|/
             #                           x    (alpha is angle between arc and center)
             #
+            
             depth *= math.cos(self.game.player.angle - ray_angle)
 
             # projection
