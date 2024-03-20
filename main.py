@@ -12,7 +12,7 @@ from pathfinding import *
 from gRPC_interfaces import *
 
 
-profile_code = True
+profile_code = False
 use_static_port = True
 STATIC_PORT = 5000
 
@@ -23,8 +23,10 @@ if profile_code:
 class Game:
     def __init__(self):
         pg.init()
+
         self.render_2d = False
         self.use_mouse = False
+
         if self.use_mouse:
             pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
@@ -49,8 +51,11 @@ class Game:
         font = pg.font.SysFont('Consolas', 24)
         self.textinput = pygame_textinput.TextInputVisualizer(font_object = font)
         self.text_surfaces = []
+
         self.text_surfaces.append(font.render('Press F1 to create a server.', False, (0, 0, 0)))
         self.text_surfaces.append(font.render('To connect to server, type ip:port and hit Enter (only port for localhost).', False, (0, 0, 0)))
+
+        self.text_surfaces.append(font.render('Press G to interact with world elements.', False, (0, 0, 0)))
             
 
     def new_game(self, game_uuid = '', ip = ''):
@@ -115,6 +120,7 @@ class Game:
                 self.screen.fill('black')
                 self.map.draw()
             else:
+                pg.display.flip()
                 self.object_renderer.draw()
                 self.weapon.draw()
         else:
@@ -150,6 +156,9 @@ class Game:
             elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_over and self.is_server:
                 pg.display.flip()
                 self.new_game()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_g:
+                #self.map.destroy_block((11, 8))
+                self.object_handler.toggle_sprites()
             
             if self.init:
                 self.player.single_fire_event(event)

@@ -1,6 +1,5 @@
 import pygame as pg
 import math
-import cProfile
 from settings import *
 
 
@@ -124,9 +123,5 @@ class RayCasting:
             ray_angle += DELTA_ANGLE
 
     def update(self):
-        print('ray_cast')
-        cProfile.runctx('self.ray_cast()', globals(), locals())
-        #self.ray_cast()
-        print('get_objects_to_render')
-        cProfile.runctx('self.get_objects_to_render()', globals(), locals())
-        #self.get_objects_to_render()
+        self.ray_cast()
+        self.get_objects_to_render()

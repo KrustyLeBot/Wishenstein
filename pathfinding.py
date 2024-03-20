@@ -5,10 +5,9 @@ from functools import lru_cache
 class PathFinding:
     def __init__(self, game):
         self.game = game
-        self.map = game.map.mini_map
         self.ways = [-1, 0], [0, -1], [1, 0], [0, 1], [-1, -1], [1, -1], [1, 1], [-1, 1]
         self.graph = {}
-        self.get_graph()
+        self.update_graph()
 
     @lru_cache
     def get_path(self, start, goal):
@@ -40,8 +39,9 @@ class PathFinding:
     def get_next_nodes(self, x, y):
         return [(x + dx, y + dy) for dx, dy in self.ways if (x + dx, y + dy) not in self.game.map.world_map]
 
-    def get_graph(self):
-        for y, row in enumerate(self.map):
+    def update_graph(self):
+        self.graph = {}
+        for y, row in enumerate(self.game.map.mini_map):
             for x, col in enumerate(row):
                 if not col:
                     self.graph[(x, y)] = self.graph.get((x, y), []) + self.get_next_nodes(x, y)

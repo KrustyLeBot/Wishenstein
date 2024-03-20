@@ -40,7 +40,8 @@ class GameServicer(pb2_grpc.gameServicer):
                 'path': sprite.raw_path,
                 'scale': sprite.SPRITE_SCALE,
                 'shift': sprite.SPRITE_HEIGHT_SHIFT,
-                'animation_time': sprite.animation_time
+                'animation_time': sprite.animation_time,
+                'state': sprite.state if sprite.__class__.__name__ == StateSprite.__name__ else 0
                 }
             yield pb2.Sprite(**result)
 

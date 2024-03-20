@@ -78,6 +78,10 @@ class SpriteObject:
     def update(self):
         self.get_sprite()
 
+    @property
+    def map_pos(self):
+        return (int(self.x), int(self.y))
+
 
 class AnimatedSprite(SpriteObject):
     def __init__(
@@ -121,3 +125,33 @@ class AnimatedSprite(SpriteObject):
                 img = pg.image.load(path + "/" + file_name).convert_alpha()
                 images.append(img)
         return images
+
+
+class StateSprite(SpriteObject):
+    def __init__(
+        self,
+        game,
+        path="resources/sprites/animated_sprites/green_light/0.png",
+        pos=(11.5, 3.5),
+        scale=0.8,
+        shift=0.16,
+        uuid_ = '',
+        state = -1
+    ):
+        super().__init__(game, path, pos, scale, shift, uuid_)
+        self.path = path.rsplit("/", 1)[0]
+        if state == -1:
+            self.state = 0
+        else:
+            self.state = state
+        self.image = self.get_images()
+
+    def get_images(self):
+        return pg.image.load(self.path + "/" + f"{self.state}" + ".png").convert_alpha()
+    
+    def toggle(self):
+        if self.state == 0:
+            self.state = 1
+        elif self.state == 1:
+            self.state = 0
+        self.image = self.get_images()

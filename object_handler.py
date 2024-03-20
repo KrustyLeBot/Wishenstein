@@ -50,7 +50,9 @@ class ObjectHandler:
             add_sprite(AnimatedSprite(game, pos=(1.5, 30.5)))
             add_sprite(AnimatedSprite(game, pos=(1.5, 24.5)))
 
-            self.add_npc(SoldierNPC(game))
+            add_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(5.5, 3.5)))
+
+            self.add_npc(SoldierNPC(game, pos=(5.5, 14.5)))
 
             #spawn npc
             # self.enemies = 20
@@ -83,12 +85,19 @@ class ObjectHandler:
         #Load npcs state every 30ms
         now = time.time()*1000
         if (not self.game.is_server and now - self.last_send) >= (30):
-            thread = Thread(target=self.load_npcs)
-            thread.start()
+            thread_npc = Thread(target=self.load_npcs)
+            thread_npc.start()
+
+            thread_sprites = Thread(target=self.load_sprites)
+            thread_sprites.start()
+
             self.last_send = now
 
     def add_sprite(self, sprite):
         self.sprite_list.append(sprite)
+
+    def toggle_sprites(self):
+        [sprite.toggle() for sprite in self.sprite_list if (sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < 1)]
 
     def add_npc(self, npc):
         self.npc_list[npc.uuid] = npc
@@ -108,6 +117,8 @@ class ObjectHandler:
                     sprite_list_tmp.append(SpriteObject(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid))
                 elif sprite.type == AnimatedSprite.__name__:
                     sprite_list_tmp.append(AnimatedSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.animation_time, sprite.uuid))
+                elif sprite.type == StateSprite.__name__:
+                    sprite_list_tmp.append(StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state))
 
             self.sprite_list = sprite_list_tmp
             self.sprite_init_from_server = True

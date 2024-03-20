@@ -39,6 +39,7 @@ message Sprite{
  float scale = 6;
  float shift = 7;
  float animation_time = 8;
+ int32 state = 9;
 }
 
 message NPC{
