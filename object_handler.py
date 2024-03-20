@@ -50,7 +50,9 @@ class ObjectHandler:
             add_sprite(AnimatedSprite(game, pos=(1.5, 30.5)))
             add_sprite(AnimatedSprite(game, pos=(1.5, 24.5)))
 
-            add_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(5.5, 3.5)))
+            add_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9)))
+            add_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9)))
+            # todo => bind sprites and block to destroy + hold sprites instead of toggle
 
             self.add_npc(SoldierNPC(game, pos=(5.5, 14.5)))
 
@@ -97,7 +99,7 @@ class ObjectHandler:
         self.sprite_list.append(sprite)
 
     def toggle_sprites(self):
-        [sprite.toggle() for sprite in self.sprite_list if (sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < 1)]
+        [sprite.toggle() for sprite in self.sprite_list if (sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist)]
 
     def add_npc(self, npc):
         self.npc_list[npc.uuid] = npc

@@ -232,6 +232,8 @@ class DistantPlayer(AnimatedSprite):
         else:
             # todo add a static pos if player is not moving
             # todo add extra image to sprite with AI
+            # todo change color of friends and ennemy soldiers
+            
             # Choose animation depending on angle
             if self.angle > self.player.angle:
                 delta = self.angle - self.player.angle

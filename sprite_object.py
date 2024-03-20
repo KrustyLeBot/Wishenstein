@@ -145,6 +145,7 @@ class StateSprite(SpriteObject):
         else:
             self.state = state
         self.image = self.get_images()
+        self.activation_dist = 0.7
 
     def get_images(self):
         return pg.image.load(self.path + "/" + f"{self.state}" + ".png").convert_alpha()
