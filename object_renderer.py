@@ -13,8 +13,8 @@ class ObjectRenderer:
         self.sky_offset = 0
         self.blood_screen = self.get_texture("resources/textures/blood_screen.png", RES)
         self.digit_size = 90
-        self.digit_images = [self.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2) for i in range(11)]
-        self.digits = dict(zip(map(str, range(11)), self.digit_images))
+        self.digit_images = [self.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2) for i in range(12)]
+        self.digits = dict(zip(map(str, range(12)), self.digit_images))
         self.game_over_image = self.get_texture('resources/textures/game_over.png', RES)
         self.win_image = self.get_texture('resources/textures/win.png', RES)
 
@@ -22,6 +22,7 @@ class ObjectRenderer:
         self.draw_background()
         self.render_game_objects()
         self.draw_player_health()
+        self.draw_ennemies_left()
 
     def win(self):
         self.screen.blit(self.win_image, (0, 0))
@@ -35,6 +36,22 @@ class ObjectRenderer:
             for i, char in enumerate(health):
                 self.screen.blit(self.digits[char], (i * self.digit_size, 0))
             self.screen.blit(self.digits['10'], ((i + 1) * self.digit_size, 0))
+
+    def draw_ennemies_left(self):
+        health = str(self.game.player.health)
+        if not self.game.is_over:
+            npc_count_str = str(len(self.game.object_handler.npc_list))
+            npc_alive_str = str(sum(npc.health >= 1 for key, npc in self.game.object_handler.npc_list.items()))
+            tot = len(npc_alive_str) + len(npc_count_str) + 1
+            right = len(npc_count_str)
+            
+            for i, char in enumerate(npc_alive_str):
+                self.screen.blit(self.digits[char], (WIDTH - (tot * self.digit_size) + (i * self.digit_size), 0))
+            
+            self.screen.blit(self.digits['11'], (WIDTH - (tot * self.digit_size) + ((i + 1) * self.digit_size), 0))
+            
+            for i, char in enumerate(npc_count_str):
+                self.screen.blit(self.digits[char], (WIDTH - (right * self.digit_size) + (i * self.digit_size), 0))
 
     def player_damage(self):
         self.screen.blit(self.blood_screen, (0, 0))

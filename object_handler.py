@@ -66,7 +66,7 @@ class ObjectHandler:
 
             self.add_npc(SoldierNPC(game, pos=(5.5, 14.5)))
 
-            #spawn npc
+            # #spawn npc
             # self.enemies = 20
             # self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
             # self.weights = [70, 20, 10]
@@ -78,6 +78,7 @@ class ObjectHandler:
 
             thread_npc = Thread(target=self.load_npcs)
             thread_npc.start()
+        i = 6
 
     def spawn_npc(self):
         for i in range(self.enemies):
@@ -89,6 +90,8 @@ class ObjectHandler:
                 self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
 
     def update(self):
+        if self.game.is_over:
+            return
         self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.health >= 1 }
         [sprite.update() for key, sprite in self.sprite_list.items()]
         [npc.update() for key, npc in self.npc_list.items()]
@@ -287,10 +290,11 @@ class StateSpriteBinder:
     def update(self):
         sprite_in_incorrect_state = False
         for sprite in self.sprites:
-            ref = self.game.object_handler.get_sprite(sprite[0])
-            if ref.state != sprite[1]:
-                sprite_in_incorrect_state = True
-                break
+            if sprite[0] in self.game.object_handler.sprite_list:
+                ref = self.game.object_handler.get_sprite(sprite[0])
+                if ref.state != sprite[1]:
+                    sprite_in_incorrect_state = True
+                    break
         
         if not sprite_in_incorrect_state:
             for block_pos in self.blocks_to_destroy:

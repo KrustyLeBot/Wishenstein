@@ -84,6 +84,8 @@ class Game:
             self.game_uuid = game_uuid
         
         self.init = True
+        self.is_over = False
+        pg.time.delay(1500)
         
 
     def update(self):
@@ -153,7 +155,7 @@ class Game:
                     self.new_game(ip = self.textinput.value)
             elif event.type == self.global_event:
                 self.global_trigger = True
-            elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_over and self.is_server:
+            elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_server:
                 pg.display.flip()
                 self.new_game()
             
