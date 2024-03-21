@@ -1,6 +1,7 @@
 import game_pb2_grpc as pb2_grpc
 import game_pb2 as pb2
 import copy
+import win_precise_time as wpt
 from player import *
 
 
@@ -11,23 +12,25 @@ class GameServicer(pb2_grpc.gameServicer):
     
     def SendPosition(self, position, context):
         uuid = position.uuid
+
         if uuid not in self.game.distant_players:
-            self.game.distant_players[uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health)
+            self.game.distant_players[uuid] = DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health, position.last_move)
         else:
             tmp = self.game.distant_players[uuid]
             tmp.x = position.pos_x
             tmp.y = position.pos_y
             tmp.angle = position.pos_angle
             tmp.health = position.health
-            tmp.last_update = time.time()
+            tmp.last_update = wpt.time()
+            tmp.last_move = position.last_move
             self.game.distant_players[uuid] = tmp
 
         distantPlayer_dict_copy = copy.copy(self.game.distant_players)
         #add local player to dict
-        distantPlayer_dict_copy[self.game.player.uuid] = DistantPlayer(self.game, self.game.player.uuid, self.game.player.x, self.game.player.y, self.game.player.angle, self.game.player.health)
+        distantPlayer_dict_copy[self.game.player.uuid] = DistantPlayer(self.game, self.game.player.uuid, self.game.player.x, self.game.player.y, self.game.player.angle, self.game.player.health, self.game.player.last_move)
         for key, distantPlayer in distantPlayer_dict_copy.items():
             if key != uuid:
-                result = { 'uuid': key, 'pos_x': distantPlayer.x, 'pos_y': distantPlayer.y, 'pos_angle': distantPlayer.angle, 'health': distantPlayer.health }
+                result = { 'uuid': key, 'pos_x': distantPlayer.x, 'pos_y': distantPlayer.y, 'pos_angle': distantPlayer.angle, 'health': distantPlayer.health, 'last_move': distantPlayer.last_move }
                 yield pb2.PlayerPosition(**result)
 
     def GetSprites(self, empty, context):

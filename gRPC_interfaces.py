@@ -1,5 +1,6 @@
 import grpc
 import random
+import win_precise_time as wpt
 import game_pb2_grpc as pb2_grpc
 from concurrent import futures
 from gRPC_game_servicer import *
@@ -17,8 +18,8 @@ class gRPC_Client_Interface():
         except grpc.FutureTimeoutError:
             self.game.exit()
     
-    def SendPosition(self, uuid, pos_x, pos_y, pos_angle, health):
-        playerPosition = pb2.PlayerPosition(uuid = uuid, pos_x = pos_x, pos_y = pos_y, pos_angle = pos_angle, health = health)
+    def SendPosition(self, uuid, pos_x, pos_y, pos_angle, health, last_move):
+        playerPosition = pb2.PlayerPosition(uuid = uuid, pos_x = pos_x, pos_y = pos_y, pos_angle = pos_angle, health = health, last_move = last_move)
         return self.stub.SendPosition(playerPosition)
     
     def GetSprites(self):
@@ -56,7 +57,7 @@ class gRPC_Server_Interface():
 
     def update(self):
         # remove distant players not updated since 1 sec
-        now = time.time()
+        now = wpt.time()
         distantPlayer_dict_copy = copy.copy(self.game.distant_players)
         key_to_delete = []
         for key, distantPlayer in distantPlayer_dict_copy.items():

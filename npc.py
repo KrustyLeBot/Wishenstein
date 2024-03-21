@@ -133,7 +133,7 @@ class NPC(AnimatedSprite):
                         self.player_search_trigger = True
 
                 if self.ray_cast_uuid != '' and 0 <= self.ray_cast_dist < self.attack_dist:
-                    #todo display attack from different angle depending on the target
+                    # todo display attack from different angle depending on the target
                     self.animate(self.attack_images)
                     self.attack()
                 else:

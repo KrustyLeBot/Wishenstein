@@ -1,7 +1,7 @@
 import pygame as pg
 import math
 import uuid
-import time
+import win_precise_time as wpt
 import copy
 from threading import Thread
 from settings import *
@@ -22,6 +22,7 @@ class Player:
         self.last_send = 0
         self.thread_working = False
         self.endTriggered = False
+        self.last_move = 0
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -91,7 +92,8 @@ class Player:
             dx -= speed_sin
             dy += speed_cos
 
-        self.check_wall_collision(dx, dy)
+        if dx != 0 or dy != 0:
+            self.check_wall_collision(dx, dy)
 
         if not self.game.use_mouse:
             #keys simplify multi client movement for debug
@@ -111,6 +113,7 @@ class Player:
             self.x += dx
         if self.check_wall(int(self.x), int(self.y + dy * scale)):
             self.y += dy
+        self.last_move = wpt.time() * 1000
 
     def draw(self):
         pg.draw.line(self.game.screen, "yellow", (self.x * 100, self.y * 100), (self.x * 100 * WIDTH * math.cos(self.angle), self.y * 100 * WIDTH * math.sin(self.angle)),2)
@@ -136,7 +139,7 @@ class Player:
             self.game.object_renderer.player_damage()
 
         #Send pos every 30ms in a separate thread
-        now = time.time()*1000
+        now = wpt.time()*1000
         if (not self.game.is_server and now - self.last_send) >= (30):
             thread = Thread(target=self.send_position)
             thread.start()
@@ -161,9 +164,9 @@ class Player:
 
         try:
             position_dict_tmp = []
-            result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle, health = self.health)
+            result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle, health = self.health, last_move = self.last_move)
             for position in result:
-                position_dict_tmp.append(DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health))
+                position_dict_tmp.append(DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health, position.last_move))
             
             # Smart merge players, and only overrides pos/health info if player already exist
             # This avoid re-setting player animation time and triggers
@@ -177,6 +180,7 @@ class Player:
                     tmp_player.y = player.y
                     tmp_player.angle = player.angle
                     tmp_player.health = player.health
+                    tmp_player.last_move = player.last_move
 
                     players_dict_final[player.uuid] = tmp_player
                 else:
@@ -191,26 +195,36 @@ class Player:
 
 
 class DistantPlayer(AnimatedSprite):
-    def __init__(self, game, uuid, pos_x, pos_y, pos_angle, health):
+    def __init__(self, game, uuid, pos_x, pos_y, pos_angle, health, last_move):
         super().__init__(game, 'resources/sprites/players/0.png', (pos_x, pos_y), 0.6, 0.38, 180, uuid)
         self.game = game
         self.x = pos_x
         self.y = pos_y
         self.angle = pos_angle
         self.uuid = uuid
-        self.last_update = time.time()
+        self.last_update = wpt.time()
         self.health = health
 
+        self.last_move = last_move
+
         self.walk_images = self.get_images(self.path + '/walk')
+        self.idle_images = self.get_images(self.path + '/idle_front')
         self.walk_back_images = self.get_images(self.path + '/walk_back')
+        self.idle_back_images = self.get_images(self.path + '/idle_back')
 
         self.walk_left_images = self.get_images(self.path + '/walk_left')
+        self.idle_left_images = self.get_images(self.path + '/idle_left')
         self.walk_left_back_images = self.get_images(self.path + '/walk_left_back')
+        self.idle_left_back_images = self.get_images(self.path + '/idle_left_back')
         self.walk_left_front_images = self.get_images(self.path + '/walk_left_front')
+        self.idle_left_front_images = self.get_images(self.path + '/idle_left_front')
 
         self.walk_right_images = self.get_images(self.path + '/walk_right')
+        self.idle_right_images = self.get_images(self.path + '/idle_right')
         self.walk_right_back_images = self.get_images(self.path + '/walk_right_back')
+        self.idle_right_back_images = self.get_images(self.path + '/idle_right_back')
         self.walk_right_front_images = self.get_images(self.path + '/walk_right_front')
+        self.idle_right_front_images = self.get_images(self.path + '/idle_right_front')
 
         self.death_images = self.get_images(self.path + '/death')
 
@@ -231,48 +245,51 @@ class DistantPlayer(AnimatedSprite):
                 self.deathTriggered = True
                 self.game.sound.player_death.play()
         else:
-            # todo add a static pos if player is not moving
+            idle = False
+            now = wpt.time() * 1000
+            if (now - self.last_move) > 100:
+                idle = True
+
             # todo add extra image to sprite with AI
-            
             # Choose animation depending on angle
             if self.angle > self.player.angle:
                 delta = self.angle - self.player.angle
                 deg = math.degrees(delta)
                 if 157.5 <= deg < 202.5:
-                    self.animate(self.walk_images)
+                    self.animate(self.idle_images if idle else self.walk_images)
                 elif 247.5 <= deg < 292.5:
-                    self.animate(self.walk_left_images)
+                    self.animate(self.idle_left_images if idle else self.walk_left_images)
                 elif 67.5 <= deg < 112.5:
-                    self.animate(self.walk_right_images)
+                    self.animate(self.idle_right_images if idle else self.walk_right_images)
                 elif 112.5 <= deg < 157.5:
-                    self.animate(self.walk_right_front_images)
+                    self.animate(self.idle_right_front_images if idle else self.walk_right_front_images)
                 elif 22.5 <= deg < 67.5:
-                    self.animate(self.walk_right_back_images)
+                    self.animate(self.idle_right_back_images if idle else self.walk_right_back_images)
                 elif 202.5 <= deg < 247.5:
-                    self.animate(self.walk_left_front_images)
+                    self.animate(self.idle_left_front_images if idle else self.walk_left_front_images)
                 elif 292.5 <= deg < 337.5:
-                    self.animate(self.walk_left_back_images)
+                    self.animate(self.idle_left_back_images if idle else self.walk_left_back_images)
                 else:
-                    self.animate(self.walk_back_images)
+                    self.animate(self.idle_back_images if idle else self.walk_back_images)
             else:
                 delta = self.player.angle - self.angle
                 deg = math.degrees(delta)
                 if 157.5 <= deg < 202.5:
-                    self.animate(self.walk_images)
+                    self.animate(self.idle_images if idle else self.walk_images)
                 elif 247.5 <= deg < 292.5:
-                    self.animate(self.walk_right_images)
+                    self.animate(self.idle_right_images if idle else self.walk_right_images)
                 elif 67.5 <= deg < 112.5:
-                    self.animate(self.walk_left_images)
+                    self.animate(self.idle_left_images if idle else self.walk_left_images)
                 elif 112.5 <= deg < 157.5:
-                    self.animate(self.walk_left_front_images)
+                    self.animate(self.idle_left_front_images if idle else self.walk_left_front_images)
                 elif 22.5 <= deg < 67.5:
-                    self.animate(self.walk_left_back_images)
+                    self.animate(self.idle_left_back_images if idle else self.walk_left_back_images)
                 elif 202.5 <= deg < 247.5:
-                    self.animate(self.walk_right_front_images)
+                    self.animate(self.idle_right_front_images if idle else self.walk_right_front_images)
                 elif 292.5 <= deg < 337.5:
-                    self.animate(self.walk_right_back_images)
+                    self.animate(self.idle_right_back_images if idle else self.walk_right_back_images)
                 else:
-                    self.animate(self.walk_back_images)
+                    self.animate(self.idle_back_images if idle else self.walk_back_images)
         
         if self.game.render_2d:
             self.draw_2d()

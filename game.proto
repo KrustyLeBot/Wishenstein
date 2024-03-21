@@ -29,6 +29,7 @@ message PlayerPosition{
  float pos_y = 3;
  float pos_angle = 4;
  int32 health = 5;
+ double last_move = 6;
 }
 
 message Sprite{

@@ -108,7 +108,7 @@ class Game:
 
         #Check new game every 100ms
         if self.init and self.is_over:
-            now = time.time()*1000
+            now = wpt.time()*1000
             if (not self.is_server and now - self.last_send) >= (100):
                 thread = Thread(target=self.check_new_game)
                 thread.start()

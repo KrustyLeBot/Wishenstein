@@ -1,6 +1,6 @@
 from random import choices, randrange
 from threading import Thread
-import time
+import win_precise_time as wpt
 from sprite_object import *
 from npc import *
 
@@ -94,7 +94,7 @@ class ObjectHandler:
         self.check_win()
 
         #Load npcs state every 30ms
-        now = time.time()*1000
+        now = wpt.time()*1000
         if (not self.game.is_server and now - self.last_send) >= (100):
             thread_npc = Thread(target=self.load_npcs)
             thread_npc.start()
@@ -116,7 +116,6 @@ class ObjectHandler:
         best_uuid = ''
         for key, sprite in self.sprite_list.items():
             if sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist and sprite.is_displayed:
-                #todo add a check if the sprite is rendered
                 if sprite.dist < best_dist:
                     best_uuid = sprite.uuid
             
