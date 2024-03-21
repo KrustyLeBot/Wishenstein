@@ -2,6 +2,7 @@ import pygame as pg
 import math
 import os
 import uuid
+import win_precise_time as wpt
 from collections import deque
 from settings import *
 
@@ -159,6 +160,7 @@ class StateSprite(SpriteObject):
 
         self.last_press_uuid = last_press_uuid
         self.hold = hold
+        self.last_toggle = 0
 
     def get_images(self):
         return pg.image.load(self.path + "/" + f"{self.state}" + ".png").convert_alpha()
@@ -177,6 +179,7 @@ class StateSprite(SpriteObject):
             self.state = new_state
             self.image = self.get_images()
 
+        self.last_toggle = wpt.time()
         return (new_state, self.last_press_uuid)
     
     def press(self, appy_state = False, presser_uuid = ''):

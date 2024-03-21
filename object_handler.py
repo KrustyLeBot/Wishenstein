@@ -57,8 +57,10 @@ class ObjectHandler:
             # sprite binder map (dont forget to add the sprite with add_sprite after binding it)
             add_sprite_binder = self.add_sprite_binder
             binder = StateSpriteBinder(self.game)
-            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=True), 1))
-            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=True), 1))
+            # add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=True), 1))
+            # add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=True), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=False), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=False), 1))
             binder.add_blocks_to_destroy(((11, 8)))
             add_sprite_binder(binder)
 
@@ -125,10 +127,14 @@ class ObjectHandler:
             if checkClassName and sprite.dist < sprite.activation_dist and sprite.is_displayed:
                 #if sprite is at dist and we press and someone else is not pressing it
                 if sprite.norm_dist < best_dist and keys[sprite.key] and not (sprite.hold and sprite.last_press_uuid != ''):
-                    best_uuid = sprite.uuid
-                    best_dist = sprite.norm_dist
-                    if sprite.hold:
-                        hold = True
+                    
+                    now = wpt.time()
+
+                    if (now - sprite.last_toggle) > 1:
+                        best_uuid = sprite.uuid
+                        best_dist = sprite.norm_dist
+                        if sprite.hold:
+                            hold = True
 
             #if sprite must hold and we dont press, reset it
             if checkClassName and sprite.hold and sprite.last_press_uuid == self.game.player.uuid and (not keys[sprite.key] or sprite.norm_dist >= sprite.activation_dist):
@@ -183,7 +189,8 @@ class ObjectHandler:
                 if sprite.uuid in self.sprite_list:
                     tmp_sprite = self.sprite_list[sprite.uuid]
                     
-                    # keep dist from local sprite
+                    # keep dist/toggle_time from local sprite
+                    save_toggle_time = tmp_sprite.last_toggle
                     save_dist = tmp_sprite.dist
                     save_norm_dist = tmp_sprite.norm_dist
 
@@ -191,6 +198,7 @@ class ObjectHandler:
 
                     tmp_sprite.dist = save_dist
                     tmp_sprite.norm_dist = save_norm_dist
+                    tmp_sprite.last_toggle = save_toggle_time
 
                     dict_final[sprite.uuid] = tmp_sprite
                 else:

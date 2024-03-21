@@ -97,6 +97,7 @@ class Game:
 
         if self.init:
             self.player.update()
+            self.map.update()
             self.raycasting.update()
             self.object_handler.update()
             distant_players_cpy = copy.copy(self.distant_players)

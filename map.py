@@ -1,4 +1,7 @@
 import pygame as pg
+from threading import Thread
+import win_precise_time as wpt
+import json
 
 _ = False
 mini_map = [
@@ -45,8 +48,11 @@ class Map:
         self.rows = len(self.mini_map)
         self.cols = len(self.mini_map[0])
         self.get_map()
+        self.last_send = 0
+        self.thread_working = False
 
     def get_map(self):
+        self.world_map = {}
         for j, row in enumerate(self.mini_map):
             for i, value in enumerate(row):
                 if value:
@@ -67,3 +73,29 @@ class Map:
         if texture == 6:
             return True
         return False
+    
+    def update(self):
+        # load map every 30ms
+        now = wpt.time()*1000
+        if (not self.game.is_server and now - self.last_send) >= (30):
+            thread = Thread(target=self.load_map)
+            thread.start()
+
+            self.last_send = now
+
+    def load_map(self):
+        if self.thread_working:
+            return
+        self.thread_working = True
+
+        result = self.game.net_client.GetMap()
+        dump_local = json.dumps(self.mini_map)
+        diff = dump_local != result.map
+
+        if diff:
+            result_map = json.loads(result.map)
+            self.mini_map = result_map
+            self.get_map()
+            self.game.pathfinding.update_graph()
+
+        self.thread_working = False

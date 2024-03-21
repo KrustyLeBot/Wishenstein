@@ -1,6 +1,7 @@
 import game_pb2_grpc as pb2_grpc
 import game_pb2 as pb2
 import copy
+import json
 import win_precise_time as wpt
 from player import *
 
@@ -89,3 +90,6 @@ class GameServicer(pb2_grpc.gameServicer):
             else:
                 sprite.toggle(toggled.state, appy_state = True)
         return pb2.Empty()
+    
+    def GetMap(self, empty, context):
+        return pb2.Map(map = json.dumps(self.game.map.mini_map))
