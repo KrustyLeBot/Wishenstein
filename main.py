@@ -124,7 +124,6 @@ class Game:
                 self.object_renderer.draw()
                 self.weapon.draw()
         else:
-            #display mapping to start server
             self.screen.fill((225, 225, 225))
             y = 0
             line_space = 30
@@ -157,7 +156,6 @@ class Game:
                 pg.display.flip()
                 self.new_game()
             elif event.type == pg.KEYDOWN and event.key == pg.K_g:
-                #self.map.destroy_block((11, 8))
                 self.object_handler.toggle_sprites()
             
             if self.init:
@@ -170,7 +168,6 @@ class Game:
             self.draw()
 
     def check_new_game(self):
-        #If another thread is working, ignore
         if self.thread_working:
             return
         self.thread_working = True

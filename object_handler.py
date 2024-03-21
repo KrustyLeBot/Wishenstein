@@ -8,7 +8,8 @@ from npc import *
 class ObjectHandler:
     def __init__(self, game):
         self.game = game
-        self.sprite_list = []
+        self.sprite_binder_list = []
+        self.sprite_list = {}
         self.npc_list = {}
         self.npc_sprite_path = "resources/sprites/npc/"
         self.static_sprite_path = "resources/sprites/static_sprites/"
@@ -50,9 +51,15 @@ class ObjectHandler:
             add_sprite(AnimatedSprite(game, pos=(1.5, 30.5)))
             add_sprite(AnimatedSprite(game, pos=(1.5, 24.5)))
 
-            add_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9)))
-            add_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9)))
-            # todo => bind sprites and block to destroy + hold sprites instead of toggle
+            
+
+            # sprite binder map (dont forget to add the sprite with add_sprite after binding it)
+            add_sprite_binder = self.add_sprite_binder
+            binder = StateSpriteBinder(self.game)
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9)), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9)), 1))
+            binder.add_blocks_to_destroy(((11, 8)))
+            add_sprite_binder(binder)
 
             self.add_npc(SoldierNPC(game, pos=(5.5, 14.5)))
 
@@ -80,8 +87,9 @@ class ObjectHandler:
 
     def update(self):
         self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.health >= 1 }
-        [sprite.update() for sprite in self.sprite_list]
+        [sprite.update() for key, sprite in self.sprite_list.items()]
         [npc.update() for key, npc in self.npc_list.items()]
+        [binder.update() for binder in self.sprite_binder_list]
         self.check_win()
 
         #Load npcs state every 30ms
@@ -96,10 +104,16 @@ class ObjectHandler:
             self.last_send = now
 
     def add_sprite(self, sprite):
-        self.sprite_list.append(sprite)
+        self.sprite_list[sprite.uuid] = sprite
+
+    def add_sprite_binder(self, binder):
+        self.sprite_binder_list.append(binder)
 
     def toggle_sprites(self):
-        [sprite.toggle() for sprite in self.sprite_list if (sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist)]
+        [sprite.toggle() for key, sprite in self.sprite_list.items() if (sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist)]
+
+    def get_sprite(self, uuid):
+        return self.sprite_list[uuid]
 
     def add_npc(self, npc):
         self.npc_list[npc.uuid] = npc
@@ -112,15 +126,17 @@ class ObjectHandler:
 
     def load_sprites(self):
         try:
-            sprite_list_tmp = []
+            sprite_list_tmp = {}
             result = self.game.net_client.GetSprites()
             for sprite in result:
                 if sprite.type == SpriteObject.__name__:
-                    sprite_list_tmp.append(SpriteObject(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid))
+                    sprite_tmp = SpriteObject(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid)
                 elif sprite.type == AnimatedSprite.__name__:
-                    sprite_list_tmp.append(AnimatedSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.animation_time, sprite.uuid))
+                    sprite_tmp = AnimatedSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.animation_time, sprite.uuid)
                 elif sprite.type == StateSprite.__name__:
-                    sprite_list_tmp.append(StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state))
+                    sprite_tmp = StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state)
+
+            sprite_list_tmp[sprite_tmp.uuid] = sprite_tmp
 
             self.sprite_list = sprite_list_tmp
             self.sprite_init_from_server = True
@@ -184,3 +200,31 @@ class ObjectHandler:
             self.game.exit()
 
         self.thread_working = False
+
+
+class StateSpriteBinder:
+    def __init__(self, game):
+        self.game = game
+        self.sprites = []
+        self.blocks_to_destroy = []
+        self.triggered = False
+
+    def bind_sprite(self, sprite, state):
+        self.sprites.append((sprite.uuid, state))
+        return sprite
+
+    def add_blocks_to_destroy(self, pos):
+        self.blocks_to_destroy.append(pos)
+
+    def update(self):
+        sprite_in_incorrect_state = False
+        for sprite in self.sprites:
+            ref = self.game.object_handler.get_sprite(sprite[0])
+            if ref.state != sprite[1]:
+                sprite_in_incorrect_state = True
+                break
+        
+        if not sprite_in_incorrect_state:
+            for block_pos in self.blocks_to_destroy:
+                self.game.map.destroy_block(block_pos)
+            self.triggered = True

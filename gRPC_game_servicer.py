@@ -31,7 +31,7 @@ class GameServicer(pb2_grpc.gameServicer):
                 yield pb2.PlayerPosition(**result)
 
     def GetSprites(self, empty, context):
-        for sprite in self.game.object_handler.sprite_list:
+        for key, sprite in self.game.object_handler.sprite_list.items():
             result = {
                 'type': sprite.__class__.__name__,
                 'uuid': sprite.uuid,

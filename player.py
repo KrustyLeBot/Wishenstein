@@ -132,6 +132,7 @@ class Player:
             self.mouse_control()
             self.recover_health()
         else:
+            # todo screen wait for revive
             self.game.object_renderer.player_damage()
 
         #Send pos every 30ms in a separate thread
@@ -232,7 +233,6 @@ class DistantPlayer(AnimatedSprite):
         else:
             # todo add a static pos if player is not moving
             # todo add extra image to sprite with AI
-            # todo change color of friends and ennemy soldiers
             
             # Choose animation depending on angle
             if self.angle > self.player.angle:
