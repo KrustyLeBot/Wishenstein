@@ -12,7 +12,7 @@ from pathfinding import *
 from gRPC_interfaces import *
 
 
-profile_code = False
+profile_code = True
 use_static_port = True
 STATIC_PORT = 5000
 
@@ -120,7 +120,6 @@ class Game:
                 self.screen.fill('black')
                 self.map.draw()
             else:
-                pg.display.flip()
                 self.object_renderer.draw()
                 self.weapon.draw()
         else:

@@ -71,3 +71,9 @@ class GameServicer(pb2_grpc.gameServicer):
     
     def CheckNewGame(self, empty, context):
         return pb2.NewGame(game_uuid = self.game.game_uuid)
+    
+    def ToggleSprite(self, toggled, context):
+        if toggled.uuid in self.game.object_handler.sprite_list:
+            sprite = self.game.object_handler.sprite_list[toggled.uuid]
+            sprite.toggle(toggled.state, appy_state = True)
+        return pb2.Empty()

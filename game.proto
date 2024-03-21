@@ -8,6 +8,7 @@ service game{
   rpc GetNpcs(Empty) returns (stream NPC) {}
   rpc ShootNpc(NpcShot) returns (Empty) {}
   rpc CheckNewGame(Empty) returns (NewGame) {}
+  rpc ToggleSprite(SpriteToggled) returns (Empty) {}
 }
 
 message Empty{
@@ -55,4 +56,9 @@ message NPC{
  string last_ray_cast_uuid = 10;
  float ray_cast_dist = 11;
  int32 health = 12;
+}
+
+message SpriteToggled{
+  string uuid = 1;
+  int32 state = 2;
 }

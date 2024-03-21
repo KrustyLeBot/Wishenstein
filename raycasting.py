@@ -15,7 +15,6 @@ class RayCasting:
 
         #we must take the furthest displayed element, and replace it by a black image of the width of the screen
         #this will ensure to have a black displayed texture instead of potentially transparent space
-        temp = []
         for values in self.ray_casting_result:
             ray, depth, proj_height, texture, offset = values
 

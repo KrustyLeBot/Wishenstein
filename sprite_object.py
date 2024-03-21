@@ -23,6 +23,7 @@ class SpriteObject:
         self.game = game
         self.raw_path = path
         self.animation_time = 0
+        self.state = 0
         self.player = game.player
         self.x, self.y = pos
         self.image = pg.image.load(path).convert_alpha()
@@ -40,6 +41,7 @@ class SpriteObject:
         self.sprite_half_width = 0
         self.SPRITE_SCALE = scale
         self.SPRITE_HEIGHT_SHIFT = shift
+        self.is_displayed = False
 
     def get_sprite_projection(self):
         proj = SCREEN_DIST / self.norm_dist * self.SPRITE_SCALE
@@ -72,8 +74,11 @@ class SpriteObject:
 
         self.dist = math.hypot(dx, dy)
         self.norm_dist = self.dist * math.cos(delta)
-        if (-self.IMAGE_HALF_WIDTH < self.screen_x < (WIDTH + self.IMAGE_HALF_WIDTH) and self.norm_dist > 0.5):
+        if (-self.IMAGE_HALF_WIDTH < self.screen_x < (WIDTH + self.IMAGE_HALF_WIDTH) and self.norm_dist > 0.1):
             self.get_sprite_projection()
+            self.is_displayed = True
+        else:
+            self.is_displayed = False
 
     def update(self):
         self.get_sprite()
@@ -131,7 +136,7 @@ class StateSprite(SpriteObject):
     def __init__(
         self,
         game,
-        path="resources/sprites/animated_sprites/green_light/0.png",
+        path="resources/sprites/state_sprite/torch/0.png",
         pos=(11.5, 3.5),
         scale=0.8,
         shift=0.16,
@@ -145,14 +150,24 @@ class StateSprite(SpriteObject):
         else:
             self.state = state
         self.image = self.get_images()
-        self.activation_dist = 0.7
+        self.activation_dist = 1
 
     def get_images(self):
         return pg.image.load(self.path + "/" + f"{self.state}" + ".png").convert_alpha()
     
-    def toggle(self):
-        if self.state == 0:
-            self.state = 1
-        elif self.state == 1:
-            self.state = 0
-        self.image = self.get_images()
+    def toggle(self, state = -1, appy_state = False):
+        new_state = -1
+        if state == -1:
+            if self.state == 0:
+                new_state = 1
+            elif self.state == 1:
+                new_state = 0
+        else:
+            new_state = state
+
+        if appy_state:
+            self.state = new_state
+            self.image = self.get_images()
+        
+
+        return new_state

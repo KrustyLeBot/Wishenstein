@@ -20,7 +20,8 @@ class ObjectHandler:
 
         self.last_send = 0
         self.last_thread_time = 0
-        self.thread_working = False
+        self.thread_working_npc = False
+        self.thread_working_sprite = False
 
         if self.game.is_server:
             self.sprite_init_from_server = True
@@ -94,7 +95,7 @@ class ObjectHandler:
 
         #Load npcs state every 30ms
         now = time.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (30):
+        if (not self.game.is_server and now - self.last_send) >= (100):
             thread_npc = Thread(target=self.load_npcs)
             thread_npc.start()
 
@@ -110,7 +111,23 @@ class ObjectHandler:
         self.sprite_binder_list.append(binder)
 
     def toggle_sprites(self):
-        [sprite.toggle() for key, sprite in self.sprite_list.items() if (sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist)]
+        #toggle the closest sprite
+        best_dist = 99999999
+        best_uuid = ''
+        for key, sprite in self.sprite_list.items():
+            if sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist and sprite.is_displayed:
+                #todo add a check if the sprite is rendered
+                if sprite.dist < best_dist:
+                    best_uuid = sprite.uuid
+            
+        if best_uuid != '':
+            new_state = self.sprite_list[best_uuid].toggle(appy_state = True if self.game.is_server else False)
+            if not self.game.is_server:
+                thread = Thread(target=self.send_toggle, args=(best_uuid, new_state))
+                thread.start()
+
+    def send_toggle(self, uuid, state):
+        self.game.net_client.ToggleSprite(uuid, state)
 
     def get_sprite(self, uuid):
         return self.sprite_list[uuid]
@@ -125,30 +142,39 @@ class ObjectHandler:
             pg.display.flip()
 
     def load_sprites(self):
+        #If another thread is working, ignore
+        if self.thread_working_sprite:
+            return
+        self.thread_working_sprite = True
+
         try:
-            sprite_list_tmp = {}
+            sprite_list_tmp = []
             result = self.game.net_client.GetSprites()
             for sprite in result:
                 if sprite.type == SpriteObject.__name__:
-                    sprite_tmp = SpriteObject(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid)
+                    sprite_list_tmp.append(SpriteObject(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid))
                 elif sprite.type == AnimatedSprite.__name__:
-                    sprite_tmp = AnimatedSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.animation_time, sprite.uuid)
+                    sprite_list_tmp.append(AnimatedSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.animation_time, sprite.uuid))
                 elif sprite.type == StateSprite.__name__:
-                    sprite_tmp = StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state)
+                    sprite_list_tmp.append(StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state))
 
-            sprite_list_tmp[sprite_tmp.uuid] = sprite_tmp
+            dict_final = {}
+            for sprite in sprite_list_tmp:
+                dict_final[sprite.uuid] = sprite
 
-            self.sprite_list = sprite_list_tmp
+            self.sprite_list = dict_final
             self.sprite_init_from_server = True
         
         except:
             self.game.exit()
 
+        self.thread_working_sprite = False
+
     def load_npcs(self):
         #If another thread is working, ignore
-        if self.thread_working:
+        if self.thread_working_npc:
             return
-        self.thread_working = True
+        self.thread_working_npc = True
 
         try:
             npcs_list_tmp = []
@@ -199,7 +225,7 @@ class ObjectHandler:
         except:
             self.game.exit()
 
-        self.thread_working = False
+        self.thread_working_npc = False
 
 
 class StateSpriteBinder:

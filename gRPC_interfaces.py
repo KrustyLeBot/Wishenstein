@@ -37,6 +37,10 @@ class gRPC_Client_Interface():
         empty = pb2.Empty()
         return self.stub.CheckNewGame(empty)
     
+    def ToggleSprite(self, uuid, state):
+        toggle = pb2.SpriteToggled(uuid = uuid, state = state)
+        self.stub.ToggleSprite(toggle)
+    
 
 class gRPC_Server_Interface():
     def __init__(self, game, input_port = -1):
