@@ -154,11 +154,10 @@ class Game:
             elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_over and self.is_server:
                 pg.display.flip()
                 self.new_game()
-            elif event.type == pg.KEYDOWN and event.key == pg.K_g:
-                self.object_handler.toggle_sprites()
             
             if self.init:
                 self.player.single_fire_event(event)
+                self.object_handler.toggle_sprites()
 
     def run(self):
         while self.running:

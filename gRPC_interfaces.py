@@ -38,8 +38,8 @@ class gRPC_Client_Interface():
         empty = pb2.Empty()
         return self.stub.CheckNewGame(empty)
     
-    def ToggleSprite(self, uuid, state):
-        toggle = pb2.SpriteToggled(uuid = uuid, state = state)
+    def ToggleSprite(self, uuid, state, presser_uuid):
+        toggle = pb2.SpriteToggled(uuid = uuid, state = state, presser_uuid = presser_uuid)
         self.stub.ToggleSprite(toggle)
     
 

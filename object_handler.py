@@ -57,8 +57,8 @@ class ObjectHandler:
             # sprite binder map (dont forget to add the sprite with add_sprite after binding it)
             add_sprite_binder = self.add_sprite_binder
             binder = StateSpriteBinder(self.game)
-            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9)), 1))
-            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9)), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=True), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=True), 1))
             binder.add_blocks_to_destroy(((11, 8)))
             add_sprite_binder(binder)
 
@@ -93,9 +93,9 @@ class ObjectHandler:
         [binder.update() for binder in self.sprite_binder_list]
         self.check_win()
 
-        #Load npcs state every 30ms
+        #Load npcs/sprites state every 30ms
         now = wpt.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (100):
+        if (not self.game.is_server and now - self.last_send) >= (30):
             thread_npc = Thread(target=self.load_npcs)
             thread_npc.start()
 
@@ -111,22 +111,43 @@ class ObjectHandler:
         self.sprite_binder_list.append(binder)
 
     def toggle_sprites(self):
+        keys = pg.key.get_pressed()
         #toggle the closest sprite
         best_dist = 99999999
         best_uuid = ''
+        
+        hold = False
+        reset = False
+
         for key, sprite in self.sprite_list.items():
-            if sprite.__class__.__name__ == StateSprite.__name__ and sprite.dist < sprite.activation_dist and sprite.is_displayed:
-                if sprite.dist < best_dist:
+            checkClassName = sprite.__class__.__name__ == StateSprite.__name__
+
+            if checkClassName and sprite.dist < sprite.activation_dist and sprite.is_displayed:
+                #if sprite is at dist and we press and someone else is not pressing it
+                if sprite.norm_dist < best_dist and keys[sprite.key] and not (sprite.hold and sprite.last_press_uuid != ''):
                     best_uuid = sprite.uuid
+                    best_dist = sprite.norm_dist
+                    if sprite.hold:
+                        hold = True
+
+            #if sprite must hold and we dont press, reset it
+            if checkClassName and sprite.hold and sprite.last_press_uuid == self.game.player.uuid and (not keys[sprite.key] or sprite.norm_dist >= sprite.activation_dist):
+                best_uuid = sprite.uuid
+                reset = True
             
         if best_uuid != '':
-            new_state = self.sprite_list[best_uuid].toggle(appy_state = True if self.game.is_server else False)
+            if hold:
+                (new_state, presser_uuid) = self.sprite_list[best_uuid].press(appy_state = True if self.game.is_server else False, presser_uuid = self.game.player.uuid)
+            elif reset:
+                (new_state, presser_uuid) = self.sprite_list[best_uuid].release(appy_state = True if self.game.is_server else False, presser_uuid = self.game.player.uuid)
+            else:
+                (new_state, presser_uuid) = self.sprite_list[best_uuid].toggle(appy_state = True if self.game.is_server else False)
             if not self.game.is_server:
-                thread = Thread(target=self.send_toggle, args=(best_uuid, new_state))
+                thread = Thread(target=self.send_toggle, args=(best_uuid, new_state, presser_uuid))
                 thread.start()
 
-    def send_toggle(self, uuid, state):
-        self.game.net_client.ToggleSprite(uuid, state)
+    def send_toggle(self, uuid, state, presser_uuid):
+        self.game.net_client.ToggleSprite(uuid, state, presser_uuid)
 
     def get_sprite(self, uuid):
         return self.sprite_list[uuid]
@@ -155,11 +176,25 @@ class ObjectHandler:
                 elif sprite.type == AnimatedSprite.__name__:
                     sprite_list_tmp.append(AnimatedSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.animation_time, sprite.uuid))
                 elif sprite.type == StateSprite.__name__:
-                    sprite_list_tmp.append(StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state))
+                    sprite_list_tmp.append(StateSprite(self.game, sprite.path, (sprite.pos_x, sprite.pos_y), sprite.scale, sprite.shift, sprite.uuid, sprite.state, sprite.last_press_uuid, sprite.hold))
 
             dict_final = {}
             for sprite in sprite_list_tmp:
-                dict_final[sprite.uuid] = sprite
+                if sprite.uuid in self.sprite_list:
+                    tmp_sprite = self.sprite_list[sprite.uuid]
+                    
+                    # keep dist from local sprite
+                    save_dist = tmp_sprite.dist
+                    save_norm_dist = tmp_sprite.norm_dist
+
+                    tmp_sprite = sprite
+
+                    tmp_sprite.dist = save_dist
+                    tmp_sprite.norm_dist = save_norm_dist
+
+                    dict_final[sprite.uuid] = tmp_sprite
+                else:
+                    dict_final[sprite.uuid] = sprite
 
             self.sprite_list = dict_final
             self.sprite_init_from_server = True

@@ -44,7 +44,9 @@ class GameServicer(pb2_grpc.gameServicer):
                 'scale': sprite.SPRITE_SCALE,
                 'shift': sprite.SPRITE_HEIGHT_SHIFT,
                 'animation_time': sprite.animation_time,
-                'state': sprite.state if sprite.__class__.__name__ == StateSprite.__name__ else 0
+                'state': sprite.state if sprite.__class__.__name__ == StateSprite.__name__ else 0,
+                'hold': sprite.hold if sprite.__class__.__name__ == StateSprite.__name__ else False,
+                'last_press_uuid': sprite.last_press_uuid if sprite.__class__.__name__ == StateSprite.__name__ else ''
                 }
             yield pb2.Sprite(**result)
 
@@ -78,5 +80,12 @@ class GameServicer(pb2_grpc.gameServicer):
     def ToggleSprite(self, toggled, context):
         if toggled.uuid in self.game.object_handler.sprite_list:
             sprite = self.game.object_handler.sprite_list[toggled.uuid]
-            sprite.toggle(toggled.state, appy_state = True)
+
+            if toggled.presser_uuid != '':
+                if toggled.state == sprite.on_state:
+                    sprite.press(appy_state = True, presser_uuid = toggled.presser_uuid)
+                else:
+                    sprite.release(appy_state = True, presser_uuid = toggled.presser_uuid)
+            else:
+                sprite.toggle(toggled.state, appy_state = True)
         return pb2.Empty()

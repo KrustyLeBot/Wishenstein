@@ -141,16 +141,24 @@ class StateSprite(SpriteObject):
         scale=0.8,
         shift=0.16,
         uuid_ = '',
-        state = -1
+        state = 0,
+        last_press_uuid = '',
+        hold = False
     ):
         super().__init__(game, path, pos, scale, shift, uuid_)
         self.path = path.rsplit("/", 1)[0]
-        if state == -1:
-            self.state = 0
-        else:
-            self.state = state
+
+        self.off_state = 0
+        self.on_state = 1
+
+
+        self.state = state
         self.image = self.get_images()
         self.activation_dist = 1
+        self.key = pg.K_g
+
+        self.last_press_uuid = last_press_uuid
+        self.hold = hold
 
     def get_images(self):
         return pg.image.load(self.path + "/" + f"{self.state}" + ".png").convert_alpha()
@@ -158,16 +166,41 @@ class StateSprite(SpriteObject):
     def toggle(self, state = -1, appy_state = False):
         new_state = -1
         if state == -1:
-            if self.state == 0:
-                new_state = 1
-            elif self.state == 1:
-                new_state = 0
+            if self.state == self.off_state:
+                new_state = self.on_state
+            elif self.state == self.on_state:
+                new_state = self.off_state
         else:
             new_state = state
 
         if appy_state:
             self.state = new_state
             self.image = self.get_images()
-        
 
-        return new_state
+        return (new_state, self.last_press_uuid)
+    
+    def press(self, appy_state = False, presser_uuid = ''):
+        new_state = self.on_state
+        if appy_state:
+            self.state = new_state
+            self.image = self.get_images()
+            if self.hold:
+                if self.state == 0:
+                    self.last_press_uuid = ''
+                else:
+                    self.last_press_uuid = presser_uuid
+
+        return (new_state, presser_uuid)
+    
+    def release(self, appy_state = False, presser_uuid = ''):
+        new_state = self.off_state
+        if appy_state:
+            self.state = new_state
+            self.image = self.get_images()
+            if self.hold:
+                if self.state == 0:
+                    self.last_press_uuid = ''
+                else:
+                    self.last_press_uuid = presser_uuid
+
+        return (new_state, presser_uuid)

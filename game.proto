@@ -42,6 +42,8 @@ message Sprite{
  float shift = 7;
  float animation_time = 8;
  int32 state = 9;
+ bool hold = 10;
+ string last_press_uuid = 11;
 }
 
 message NPC{
@@ -62,4 +64,5 @@ message NPC{
 message SpriteToggled{
   string uuid = 1;
   int32 state = 2;
+  string presser_uuid = 3;
 }
