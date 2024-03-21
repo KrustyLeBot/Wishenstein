@@ -6,5 +6,6 @@ pygame
 pyinstrument
 pygame-textinput
 win-precise-time
+pyinstaller
 #
 
