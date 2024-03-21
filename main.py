@@ -1,4 +1,5 @@
 import pygame as pg
+import sys
 import pygame_textinput
 from settings import *
 from map import *
@@ -197,4 +198,4 @@ if __name__ == "__main__":
     if profile_code:
         profiler.stop()
         profiler.print()
-    exit()
+    sys.exit()
