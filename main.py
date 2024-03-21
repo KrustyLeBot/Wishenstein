@@ -56,7 +56,7 @@ class Game:
         self.text_surfaces.append(font.render('Press F1 to create a server.', False, (0, 0, 0)))
         self.text_surfaces.append(font.render('To connect to server, type ip:port and hit Enter (only port for localhost).', False, (0, 0, 0)))
 
-        self.text_surfaces.append(font.render('Press G to interact with world elements.', False, (0, 0, 0)))
+        self.text_surfaces.append(font.render('Press F to interact with world elements.', False, (0, 0, 0)))
             
 
     def new_game(self, game_uuid = '', ip = ''):
@@ -101,7 +101,7 @@ class Game:
             self.map.update()
             self.raycasting.update()
             self.object_handler.update()
-            distant_players_cpy = copy.copy(self.distant_players)
+            distant_players_cpy = copy.deepcopy(self.distant_players)
             for key, distant_players in distant_players_cpy.items():
                     distant_players.update()
             self.weapon.update()

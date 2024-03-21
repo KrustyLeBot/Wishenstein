@@ -92,7 +92,7 @@ class ObjectHandler:
         self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.health >= 1 }
         [sprite.update() for key, sprite in self.sprite_list.items()]
         [npc.update() for key, npc in self.npc_list.items()]
-        [binder.update() for binder in self.sprite_binder_list]
+        [binder.update() for binder in self.sprite_binder_list if binder.triggered == False]
         self.check_win()
 
         #Load npcs/sprites state every 30ms

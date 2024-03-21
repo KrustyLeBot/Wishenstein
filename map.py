@@ -2,6 +2,7 @@ import pygame as pg
 from threading import Thread
 import win_precise_time as wpt
 import json
+import copy
 
 _ = False
 mini_map = [
@@ -43,7 +44,7 @@ mini_map = [
 class Map:
     def __init__(self, game):
         self.game = game
-        self.mini_map = mini_map
+        self.mini_map = copy.deepcopy(mini_map)
         self.world_map = {}
         self.rows = len(self.mini_map)
         self.cols = len(self.mini_map[0])

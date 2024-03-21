@@ -10,3 +10,4 @@ echo f | xcopy game.zip ..\game.zip
 
 cd..
 @RD /S /Q ".\dist"
+@RD /S /Q ".\build"
