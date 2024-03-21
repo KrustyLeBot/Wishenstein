@@ -39,17 +39,20 @@ class Player:
             return
 
         anyPlayerAlive = False
-        distant_players_cpy = copy.deepcopy(self.game.distant_players)
+        distant_players_cpy = copy.copy(self.game.distant_players)
         for key, distant_players in distant_players_cpy.items():
             if distant_players.health >= 1:
                 anyPlayerAlive = True
 
-        if self.health < 1 and not anyPlayerAlive:
-            self.endTriggered = True
-            self.game.object_renderer.game_over()
-            pg.display.flip()
-            pg.time.delay(1500)
-            self.game.new_game()
+        if self.health < 1:
+            if not anyPlayerAlive:
+                self.endTriggered = True
+                self.game.object_renderer.game_over()
+                pg.display.flip()
+                pg.time.delay(1500)
+                self.game.new_game()
+            else:
+                self.game.object_renderer.wait_revive()
 
     def get_damage(self, damage):
         self.health -= damage
@@ -170,7 +173,7 @@ class Player:
             
             # Smart merge players, and only overrides pos/health info if player already exist
             # This avoid re-setting player animation time and triggers
-            distant_players_copy = copy.deepcopy(self.game.distant_players)
+            distant_players_copy = copy.copy(self.game.distant_players)
             players_dict_final = {}  
             for player in position_dict_tmp:
                 if player.uuid in distant_players_copy:

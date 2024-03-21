@@ -26,7 +26,7 @@ class GameServicer(pb2_grpc.gameServicer):
             tmp.last_move = position.last_move
             self.game.distant_players[uuid] = tmp
 
-        distantPlayer_dict_copy = copy.deepcopy(self.game.distant_players)
+        distantPlayer_dict_copy = copy.copy(self.game.distant_players)
         #add local player to dict
         distantPlayer_dict_copy[self.game.player.uuid] = DistantPlayer(self.game, self.game.player.uuid, self.game.player.x, self.game.player.y, self.game.player.angle, self.game.player.health, self.game.player.last_move)
         for key, distantPlayer in distantPlayer_dict_copy.items():

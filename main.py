@@ -85,7 +85,6 @@ class Game:
         
         self.init = True
         self.is_over = False
-        pg.time.delay(1500)
         
 
     def update(self):
@@ -103,7 +102,7 @@ class Game:
             self.map.update()
             self.raycasting.update()
             self.object_handler.update()
-            distant_players_cpy = copy.deepcopy(self.distant_players)
+            distant_players_cpy = copy.copy(self.distant_players)
             for key, distant_players in distant_players_cpy.items():
                     distant_players.update()
             self.weapon.update()

@@ -193,7 +193,9 @@ class ObjectHandler:
                     tmp_sprite = self.sprite_list[sprite.uuid]
                     
                     # keep dist/toggle_time from local sprite
-                    save_toggle_time = tmp_sprite.last_toggle
+                    check_toggle = tmp_sprite.__class__.__name__ == StateSprite.__name__
+                    if check_toggle:
+                        save_toggle_time = tmp_sprite.last_toggle
                     save_dist = tmp_sprite.dist
                     save_norm_dist = tmp_sprite.norm_dist
 
@@ -201,7 +203,8 @@ class ObjectHandler:
 
                     tmp_sprite.dist = save_dist
                     tmp_sprite.norm_dist = save_norm_dist
-                    tmp_sprite.last_toggle = save_toggle_time
+                    if check_toggle:
+                        tmp_sprite.last_toggle = save_toggle_time
 
                     dict_final[sprite.uuid] = tmp_sprite
                 else:

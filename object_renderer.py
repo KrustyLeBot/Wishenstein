@@ -16,6 +16,7 @@ class ObjectRenderer:
         self.digit_images = [self.get_texture(f'resources/textures/digits/{i}.png', [self.digit_size] * 2) for i in range(12)]
         self.digits = dict(zip(map(str, range(12)), self.digit_images))
         self.game_over_image = self.get_texture('resources/textures/game_over.png', RES)
+        self.wait_revive_image = self.get_texture('resources/textures/wait_revive.png', RES)
         self.win_image = self.get_texture('resources/textures/win.png', RES)
 
     def draw(self):
@@ -29,6 +30,9 @@ class ObjectRenderer:
 
     def game_over(self):
         self.screen.blit(self.game_over_image, (0, 0))
+
+    def wait_revive(self):
+        self.screen.blit(self.wait_revive_image, (0, 0))
 
     def draw_player_health(self):
         health = str(self.game.player.health)

@@ -133,8 +133,10 @@ class NPC(AnimatedSprite):
                         self.player_search_trigger = True
 
                 if self.ray_cast_uuid != '' and 0 <= self.ray_cast_dist < self.attack_dist:
-                    # todo display attack from different angle depending on the target
-                    self.animate(self.attack_images)
+                    if self.ray_cast_uuid == self.game.player.uuid:
+                        self.animate(self.attack_images)
+                    else:
+                        self.animate(self.idle_images)
                     self.attack()
                 else:
                     self.animate(self.walk_images)
@@ -166,7 +168,7 @@ class NPC(AnimatedSprite):
         tmp_player_dict = {}
         tmp_player_dict[self.game.player.uuid] = (self.game.player.health, self.game.player.map_pos, self.game.player.pos)
 
-        distant_players_cpy = copy.deepcopy(self.game.distant_players)
+        distant_players_cpy = copy.copy(self.game.distant_players)
         for key, distant_players in distant_players_cpy.items():
             tmp_player_dict[key] = (distant_players.health, distant_players.map_pos, distant_players.pos)
 

@@ -62,7 +62,7 @@ class gRPC_Server_Interface():
     def update(self):
         # remove distant players not updated since 1 sec
         now = wpt.time()
-        distantPlayer_dict_copy = copy.deepcopy(self.game.distant_players)
+        distantPlayer_dict_copy = copy.copy(self.game.distant_players)
         key_to_delete = []
         for key, distantPlayer in distantPlayer_dict_copy.items():
             if (now - distantPlayer.last_update) > 1:
