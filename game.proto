@@ -10,6 +10,7 @@ service game{
   rpc CheckNewGame(Empty) returns (NewGame) {}
   rpc ToggleSprite(SpriteToggled) returns (Empty) {}
   rpc GetMap(Empty) returns (Map) {}
+  rpc Revive(RevivedPlayer) returns (Empty) {}
 }
 
 message Empty{
@@ -26,6 +27,10 @@ message NewGame{
 message NpcShot{
  string uuid = 1;
  int32 damage = 2;
+}
+
+message RevivedPlayer{
+ string uuid = 1;
 }
 
 message PlayerPosition{

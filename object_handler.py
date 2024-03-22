@@ -64,7 +64,7 @@ class ObjectHandler:
             binder.add_blocks_to_destroy(((11, 8)))
             add_sprite_binder(binder)
 
-            self.add_npc(SoldierNPC(game, pos=(5.5, 14.5)))
+            self.add_npc(SoldierNPC(game))
 
             # #spawn npc
             # self.enemies = 20
@@ -90,17 +90,19 @@ class ObjectHandler:
                 self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
 
     def update(self):
-        if self.game.is_over:
-            return
         self.npc_positions = { npc.map_pos for key, npc in self.npc_list.items() if npc.health >= 1 }
         [sprite.update() for key, sprite in self.sprite_list.items()]
         [npc.update() for key, npc in self.npc_list.items()]
-        [binder.update() for binder in self.sprite_binder_list if binder.triggered == False]
+
+        # fix weird crash at game recreate
+        if not self.game.is_over:
+            [binder.update() for binder in self.sprite_binder_list if binder.triggered == False]
+
         self.check_win()
 
         #Load npcs/sprites state every 30ms
         now = wpt.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (30):
+        if (not self.game.is_server and now - self.last_send) >= (30) and not (self.thread_working_npc or self.thread_working_sprite):
             thread_npc = Thread(target=self.load_npcs)
             thread_npc.start()
 

@@ -131,19 +131,23 @@ class Player:
             self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
             self.angle += self.rel * MOUSE_SENSITIVITY * self.game.delta_time
 
+    def revive(self):
+        self.health = PLAYER_MAX_HEALTH // 2
+    
     def update(self):
         self.check_game_over()
         if self.health >= 1:
             self.movement()
             self.mouse_control()
-            self.recover_health()
+            if not self.game.is_over:
+                self.recover_health()
         else:
             # todo screen wait for revive
             self.game.object_renderer.player_damage()
 
         #Send pos every 30ms in a separate thread
         now = wpt.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (30):
+        if (not self.game.is_server and now - self.last_send) >= (30) and not self.thread_working:
             thread = Thread(target=self.send_position)
             thread.start()
             self.last_send = now
@@ -169,7 +173,12 @@ class Player:
             position_dict_tmp = []
             result = self.game.net_client.SendPosition(uuid = self.uuid, pos_x = self.x, pos_y = self.y, pos_angle = self.angle, health = self.health, last_move = self.last_move)
             for position in result:
-                position_dict_tmp.append(DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health, position.last_move))
+                if position.uuid == self.game.player.uuid:
+                    # update local health if we were dead
+                    if self.game.player.health < 1:
+                        self.game.player.health = position.health
+                else:
+                    position_dict_tmp.append(DistantPlayer(self.game, position.uuid, position.pos_x, position.pos_y, position.pos_angle, position.health, position.last_move))
             
             # Smart merge players, and only overrides pos/health info if player already exist
             # This avoid re-setting player animation time and triggers
@@ -207,6 +216,7 @@ class DistantPlayer(AnimatedSprite):
         self.uuid = uuid
         self.last_update = wpt.time()
         self.health = health
+        self.revived = False
 
         self.last_move = last_move
 
@@ -233,6 +243,7 @@ class DistantPlayer(AnimatedSprite):
 
         self.deathTriggered = False
         self.frame_counter = 0
+        self.revive_dist = 1
 
     def draw_2d(self):
         pg.draw.line(self.game.screen, "yellow", (self.x * 100, self.y * 100), (self.x * 100 * WIDTH * math.cos(self.angle), self.y * 100 * WIDTH * math.sin(self.angle)), 2)
@@ -243,10 +254,20 @@ class DistantPlayer(AnimatedSprite):
         self.get_sprite()
 
         if self.health < 1:
-            self.animate_death()
-            if not self.deathTriggered:
-                self.deathTriggered = True
-                self.game.sound.player_death.play()
+            keys = pg.key.get_pressed()
+            if (self.deathTriggered and keys[ACTION_KEY] and self.norm_dist < self.revive_dist):
+                if self.frame_counter == 0:
+                    if not self.game.is_server:
+                        self.game.net_client.Revive(self.uuid)
+                    else:
+                        self.revive()
+                else:
+                    self.animate_revive()
+            else:
+                self.animate_death()
+                if not self.deathTriggered:
+                    self.deathTriggered = True
+                    self.game.sound.player_death.play()
         else:
             idle = False
             now = wpt.time() * 1000
@@ -303,6 +324,17 @@ class DistantPlayer(AnimatedSprite):
                 self.death_images.rotate(-1)
                 self.image = self.death_images[0]
                 self.frame_counter += 1
+                
+    def animate_revive(self):
+        if self.health < 1:
+            if self.game.global_trigger and self.frame_counter > 0:
+                self.death_images.rotate(1)
+                self.image = self.death_images[0]
+                self.frame_counter -= 1
+
+    def revive(self):
+        self.health = PLAYER_MAX_HEALTH // 2
+        self.revived = True
 
     @property
     def pos(self):

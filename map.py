@@ -78,7 +78,7 @@ class Map:
     def update(self):
         # load map every 30ms
         now = wpt.time()*1000
-        if (not self.game.is_server and now - self.last_send) >= (30):
+        if (not self.game.is_server and now - self.last_send) >= (30) and not self.thread_working:
             thread = Thread(target=self.load_map)
             thread.start()
 

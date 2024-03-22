@@ -1,4 +1,5 @@
 import math
+import pygame as pg
 from settings import *
 
 # fixed game settings
@@ -41,3 +42,5 @@ HALF_TEXTURE_SIZE = TEXTURE_SIZE // 2
 MOUSE_SENSITIVITY = 0.00015
 #KEY_MAPPING = ZQSD_MAPPING
 KEY_MAPPING = WASD_MAPPING
+
+ACTION_KEY = pg.K_f

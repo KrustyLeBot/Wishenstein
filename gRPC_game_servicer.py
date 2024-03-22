@@ -21,7 +21,14 @@ class GameServicer(pb2_grpc.gameServicer):
             tmp.x = position.pos_x
             tmp.y = position.pos_y
             tmp.angle = position.pos_angle
-            tmp.health = position.health
+            
+            # if player was revived, keep server health and reset revive flag
+            if position.health < 1 and tmp.revived == True:
+                pass
+            else:
+                tmp.health = position.health
+                tmp.revived = False
+
             tmp.last_update = wpt.time()
             tmp.last_move = position.last_move
             self.game.distant_players[uuid] = tmp
@@ -30,7 +37,7 @@ class GameServicer(pb2_grpc.gameServicer):
         #add local player to dict
         distantPlayer_dict_copy[self.game.player.uuid] = DistantPlayer(self.game, self.game.player.uuid, self.game.player.x, self.game.player.y, self.game.player.angle, self.game.player.health, self.game.player.last_move)
         for key, distantPlayer in distantPlayer_dict_copy.items():
-            if key != uuid:
+            if key != uuid or distantPlayer.revived:
                 result = { 'uuid': key, 'pos_x': distantPlayer.x, 'pos_y': distantPlayer.y, 'pos_angle': distantPlayer.angle, 'health': distantPlayer.health, 'last_move': distantPlayer.last_move }
                 yield pb2.PlayerPosition(**result)
 
@@ -93,3 +100,10 @@ class GameServicer(pb2_grpc.gameServicer):
     
     def GetMap(self, empty, context):
         return pb2.Map(map = json.dumps(self.game.map.mini_map))
+    
+    def Revive(self, revive, context):
+        if revive.uuid in self.game.distant_players:
+            self.game.distant_players[revive.uuid].revive()
+        elif revive.uuid == self.game.player.uuid:
+            self.game.player.revive()
+        return pb2.Empty()

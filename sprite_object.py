@@ -156,7 +156,7 @@ class StateSprite(SpriteObject):
         self.state = state
         self.image = self.get_images()
         self.activation_dist = 1
-        self.key = pg.K_f
+        self.key = ACTION_KEY
 
         self.last_press_uuid = last_press_uuid
         self.hold = hold

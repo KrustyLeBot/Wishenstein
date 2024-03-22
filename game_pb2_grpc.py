@@ -49,6 +49,11 @@ class gameStub(object):
                 request_serializer=game__pb2.Empty.SerializeToString,
                 response_deserializer=game__pb2.Map.FromString,
                 )
+        self.Revive = channel.unary_unary(
+                '/game.game/Revive',
+                request_serializer=game__pb2.RevivedPlayer.SerializeToString,
+                response_deserializer=game__pb2.Empty.FromString,
+                )
 
 
 class gameServicer(object):
@@ -96,6 +101,12 @@ class gameServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Revive(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_gameServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -133,6 +144,11 @@ def add_gameServicer_to_server(servicer, server):
                     servicer.GetMap,
                     request_deserializer=game__pb2.Empty.FromString,
                     response_serializer=game__pb2.Map.SerializeToString,
+            ),
+            'Revive': grpc.unary_unary_rpc_method_handler(
+                    servicer.Revive,
+                    request_deserializer=game__pb2.RevivedPlayer.FromString,
+                    response_serializer=game__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -260,5 +276,22 @@ class game(object):
         return grpc.experimental.unary_unary(request, target, '/game.game/GetMap',
             game__pb2.Empty.SerializeToString,
             game__pb2.Map.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Revive(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/game.game/Revive',
+            game__pb2.RevivedPlayer.SerializeToString,
+            game__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

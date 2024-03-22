@@ -57,16 +57,17 @@ class Game:
         self.text_surfaces.append(font.render('To connect to server, type ip:port and hit Enter (only port for localhost).', False, (0, 0, 0)))
 
         self.text_surfaces.append(font.render('Press F to interact with world elements.', False, (0, 0, 0)))
-            
 
-    def new_game(self, game_uuid = '', ip = ''):
+    def init_network(self, ip = ''):
         if not self.net_init:
             if self.is_server:
                 self.net_server = gRPC_Server_Interface(self, STATIC_PORT if use_static_port else -1)
             else:
                 self.net_client = gRPC_Client_Interface(self, ip if ':' in ip else f'localhost:{STATIC_PORT if use_static_port else ip}')
             self.net_init = True
+            
 
+    def new_game(self, game_uuid = ''):
         pg.event.clear()           
         self.map = Map(self)
         self.player = Player(self)
@@ -110,9 +111,9 @@ class Game:
         self.delta_time = self.clock.tick(FPS)
 
         #Check new game every 100ms
-        if self.init and self.is_over:
+        if self.net_init and self.is_over:
             now = wpt.time()*1000
-            if (not self.is_server and now - self.last_send) >= (100):
+            if (not self.is_server and now - self.last_send) >= (100) and not self.thread_working:
                 thread = Thread(target=self.check_new_game)
                 thread.start()
                 self.last_send = now
@@ -147,11 +148,12 @@ class Game:
                 if event.type == pg.KEYDOWN and event.key == pg.K_F1:
                     pg.display.flip()
                     self.is_server = True
+                    self.init_network()
                     self.new_game()
                 elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
                     pg.display.flip()
                     self.is_server = False
-                    self.new_game(ip = self.textinput.value)
+                    self.init_network(ip = self.textinput.value)
             elif event.type == self.global_event:
                 self.global_trigger = True
             elif event.type == pg.KEYDOWN and event.key == pg.K_F1 and self.is_server:

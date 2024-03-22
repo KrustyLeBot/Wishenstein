@@ -45,6 +45,10 @@ class gRPC_Client_Interface():
     def ToggleSprite(self, uuid, state, presser_uuid):
         toggle = pb2.SpriteToggled(uuid = uuid, state = state, presser_uuid = presser_uuid)
         self.stub.ToggleSprite(toggle)
+
+    def Revive(self, uuid):
+        revive = pb2.RevivedPlayer(uuid = uuid)
+        self.stub.Revive(revive)
     
 
 class gRPC_Server_Interface():
