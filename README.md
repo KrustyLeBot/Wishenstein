@@ -1,4 +1,5 @@
 Chaos Vanguard: Ascent of the Ancients
+https://krustylebot.itch.io/chaos-vanguard-ascent-of-the-ancients
 
 Wolfenstein like in python
 Based on https://github.com/StanislavPetrovV/DOOM-style-Game tutorial
