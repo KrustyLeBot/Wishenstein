@@ -298,6 +298,8 @@ class StateSpriteBinder:
                 if ref.state != sprite[1]:
                     sprite_in_incorrect_state = True
                     break
+            else:
+                sprite_in_incorrect_state = True
         
         if not sprite_in_incorrect_state:
             for block_pos in self.blocks_to_destroy:

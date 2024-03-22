@@ -56,7 +56,7 @@ class Game:
         self.text_surfaces.append(font.render('Press F1 to create a server.', False, (0, 0, 0)))
         self.text_surfaces.append(font.render('To connect to server, type ip:port and hit Enter (only port for localhost).', False, (0, 0, 0)))
 
-        self.text_surfaces.append(font.render('Press F to interact with world elements.', False, (0, 0, 0)))
+        self.text_surfaces.append(font.render('Press F to interact with world elements or revive teammates.', False, (0, 0, 0)))
 
     def init_network(self, ip = ''):
         if not self.net_init:
