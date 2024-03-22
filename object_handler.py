@@ -52,26 +52,24 @@ class ObjectHandler:
             add_sprite(AnimatedSprite(game, pos=(1.5, 30.5)))
             add_sprite(AnimatedSprite(game, pos=(1.5, 24.5)))
 
-            
 
+            
             # sprite binder map (dont forget to add the sprite with add_sprite after binding it)
             add_sprite_binder = self.add_sprite_binder
             binder = StateSpriteBinder(self.game)
-            # add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=True), 1))
-            # add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=True), 1))
-            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=False), 1))
-            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=False), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(11, 7.9), hold=True), 1))
+            add_sprite(binder.bind_sprite(StateSprite(game, path="resources/sprites/state_sprite/torch/0.png", pos=(12, 7.9), hold=True), 1))
             binder.add_blocks_to_destroy(((11, 8)))
             add_sprite_binder(binder)
 
-            self.add_npc(SoldierNPC(game))
+            #self.add_npc(SoldierNPC(game))
 
-            # #spawn npc
-            # self.enemies = 20
-            # self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
-            # self.weights = [70, 20, 10]
-            # self.restricted_area = {(i, j) for i in range(10) for j in range(10)} #no npc in the first 10x10 blocks
-            # self.spawn_npc()
+            #spawn npc
+            self.enemies = 20
+            self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
+            self.weights = [70, 20, 10]
+            self.restricted_area = {(i, j) for i in range(10) for j in range(10)} #no npc in the first 10x10 blocks
+            self.spawn_npc()
         else:
             thread_sprites = Thread(target=self.load_sprites)
             thread_sprites.start()

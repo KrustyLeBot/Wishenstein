@@ -7,7 +7,6 @@ from player import *
 
 
 class GameServicer(pb2_grpc.gameServicer):
-
     def __init__(self, game):
         self.game = game
     

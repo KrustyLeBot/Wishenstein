@@ -26,7 +26,7 @@ class Game:
         pg.init()
 
         self.render_2d = False
-        self.use_mouse = False
+        self.use_mouse = True
 
         if self.use_mouse:
             pg.mouse.set_visible(False)
@@ -185,8 +185,6 @@ class Game:
 
     def exit(self):
         self.running = False
-        if self.is_server:
-            self.net_server.server.stop(0)
 
 
 
@@ -201,4 +199,5 @@ if __name__ == "__main__":
     if profile_code:
         profiler.stop()
         profiler.print()
+    
     sys.exit()
