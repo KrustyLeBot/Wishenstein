@@ -142,7 +142,6 @@ class Player:
             if not self.game.is_over:
                 self.recover_health()
         else:
-            # todo screen wait for revive
             self.game.object_renderer.player_damage()
 
         #Send pos every 30ms in a separate thread
